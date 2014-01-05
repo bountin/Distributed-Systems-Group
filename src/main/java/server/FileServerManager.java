@@ -138,7 +138,7 @@ public class FileServerManager implements IFileServer
 	public MessageResponse uploadHMAC(HMACUploadRequest request) throws IOException {
 		try {
 			if (request.verify(fileServerConfig.getHmacKeyPath())) {
-				return upload(request.getUploadRequest());
+				return upload((UploadRequest)request.getRequest());
 			} else {
 				return new MessageResponse("Verification of HMAC failed");
 			}
