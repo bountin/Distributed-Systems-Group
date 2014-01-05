@@ -19,6 +19,7 @@ import message.response.VersionResponse;
 import model.DownloadTicket;
 import proxy.FileInfo;
 import util.ChecksumUtils;
+import util.HMACException;
 
 public class FileServerManager implements IFileServer
 {
@@ -131,6 +132,19 @@ public class FileServerManager implements IFileServer
 			return new MessageResponse("Error writing file on upload: " + e.getMessage());
 		}
 		return new MessageResponse("success");
+	}
+
+	@Override
+	public MessageResponse uploadHMAC(HMACUploadRequest request) throws IOException {
+		try {
+			if (request.verify(fileServerConfig.getHmacKeyPath())) {
+				return upload(request.getUploadRequest());
+			} else {
+				return new MessageResponse("Verification of HMAC failed");
+			}
+		} catch (HMACException e) {
+			return new MessageResponse("Generating HMAC failed");
+		}
 	}
 
 	@Override

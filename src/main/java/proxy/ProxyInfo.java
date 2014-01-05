@@ -11,6 +11,7 @@ import java.util.Set;
 
 import message.Response;
 import message.request.DownloadForReplicationRequest;
+import message.request.HMACUploadRequest;
 import message.request.ListRequest;
 import message.request.UploadRequest;
 import message.response.DownloadForReplicationResponse;
@@ -19,6 +20,7 @@ import message.response.MessageResponse;
 import objects.User;
 import server.FileServerData;
 import server.NetworkId;
+import util.HMACException;
 import util.MyUtil;
 
 public class ProxyInfo
@@ -273,9 +275,18 @@ public class ProxyInfo
 		{
 			return new MessageResponse("no fileserver available");
 		}
+
+		// Decorate UploadRequest with HMAC
+		HMACUploadRequest signedRequest;
+		try {
+			signedRequest = new HMACUploadRequest(request, hmacKeyPath);
+		} catch (HMACException e) {
+			return new MessageResponse("Generating HMAC failed");
+		}
+
 		for(NetworkId networkId : networkIds)
 		{
-			MessageResponse m = (MessageResponse)MyUtil.sendRequest(request, networkId, "error sending uploadRequest to " + networkId.getAddress() + ":" + networkId.getPort());
+			MessageResponse m = (MessageResponse)MyUtil.sendRequest(signedRequest, networkId, "error sending uploadRequest to " + networkId.getAddress() + ":" + networkId.getPort());
 			if(!m.getMessage().contains("success"))
 			{
 				return new MessageResponse(networkId + ": " + m.getMessage());

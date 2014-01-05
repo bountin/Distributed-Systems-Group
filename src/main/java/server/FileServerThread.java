@@ -36,6 +36,8 @@ public class FileServerThread extends SocketThread
 					outResponse = fileServerManager.list();
 				} else if(inRequest instanceof UploadRequest) {
 					outResponse = fileServerManager.upload((UploadRequest)inRequest);
+				} else if(inRequest instanceof HMACUploadRequest) {
+					outResponse = fileServerManager.uploadHMAC((HMACUploadRequest)inRequest);
 				} else if(inRequest instanceof VersionRequest) {
 					outResponse = fileServerManager.version((VersionRequest)inRequest);
 				} else {
