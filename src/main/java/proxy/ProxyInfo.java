@@ -284,11 +284,20 @@ public class ProxyInfo
 			return new MessageResponse("Generating HMAC failed");
 		}
 
-		for(NetworkId networkId : networkIds)
-		{
-			MessageResponse m = (MessageResponse)MyUtil.sendRequest(signedRequest, networkId, "error sending uploadRequest to " + networkId.getAddress() + ":" + networkId.getPort());
-			if(!m.getMessage().contains("success"))
-			{
+		for(NetworkId networkId : networkIds) {
+			boolean success = false;
+			MessageResponse m = null;
+			for (int i=0; i<5; i++) {
+				m = (MessageResponse) MyUtil.sendRequest(signedRequest, networkId, "error sending uploadRequest to " + networkId.getAddress() + ":" + networkId.getPort());
+				if (!m.getMessage().contains("failed")) {
+					success = true;
+					break;
+				}
+
+				System.out.println("Message integrity check failed (Fileserver "+networkId.toString()+")");
+			}
+
+			if(!success || !m.getMessage().contains("success")) {
 				return new MessageResponse(networkId + ": " + m.getMessage());
 			}
 		}

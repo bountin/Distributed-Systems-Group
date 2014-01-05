@@ -140,6 +140,7 @@ public class FileServerManager implements IFileServer
 			if (request.verify(fileServerConfig.getHmacKeyPath())) {
 				return upload((UploadRequest)request.getRequest());
 			} else {
+				System.out.println("Verification of HMAC failed: " + request.toString());
 				return new MessageResponse("Verification of HMAC failed");
 			}
 		} catch (HMACException e) {
