@@ -52,6 +52,8 @@ public class Proxy extends ProxyCommands implements Runnable
 			shell.writeLine("udp.port: the port to be used for instantiating a java.net.DatagramSocket (handling UDP requests from fileservers).");
 			shell.writeLine("fileserver.timeout: the period in milliseconds each fileserver has to send an isAlive packet (only containing the fileserver's TCP port). If no such packet is received within this time, the fileserver is assumed to be offline and is no longer available for handling requests.");
 			shell.writeLine("fileserver.checkPeriod: specifies the number of delay milliseconds to repeatedly test whether a fileserver has timed-out or not (see fileserver.timeout).");
+			shell.writeLine("keys.dir: directory where to look for user's public keys (named <username>.pub.pem).");
+			shell.writeLine("key: telling where to read the Proxy's private key.");
 			shell.writeLine("hmac.key: The path to the secret key that is used to authenticate the proxy's communication with the file servers.");
 			return;
 		}
@@ -88,7 +90,7 @@ public class Proxy extends ProxyCommands implements Runnable
 			while(!closed)
 			{
 				System.err.println("Listening ...");
-				ProxyThread proxyThread = new ProxyThread(proxySocket.accept(), "proxyClientThread");
+				ProxyThread proxyThread = new ProxyThread(proxySocket.accept(), "proxyClientThread", proxyConfig);
 				proxyThread.start();
 				proxyThreads.add(proxyThread);
 			}

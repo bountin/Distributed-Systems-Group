@@ -3,6 +3,7 @@ package client;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.net.Socket;
 
 import message.Response;
 import message.ResponseUtil;
@@ -12,7 +13,6 @@ import message.request.DownloadFileRequest;
 import message.request.DownloadTicketRequest;
 import message.request.ExitRequest;
 import message.request.ListRequest;
-import message.request.LoginRequest;
 import message.request.LogoutRequest;
 import message.request.UploadRequest;
 import message.response.DownloadFileResponse;
@@ -21,11 +21,13 @@ import message.response.LoginResponse;
 import message.response.MessageResponse;
 import model.DownloadTicket;
 import util.MyUtil;
+import auth.ClientAuthenticator;
 import cli.Command;
 
 public abstract class ClientCommands extends ResponseUtil implements IClientCli
 {
 	protected ClientConfig clientConfig;
+	protected Socket proxySocket;
 
 	/* !buy <credits> */
 	@Override
@@ -117,15 +119,14 @@ public abstract class ClientCommands extends ResponseUtil implements IClientCli
 	{
 		try
 		{
-			out.writeObject(new LoginRequest(username, password));
-			out.flush();
-
-			return (LoginResponse)in.readObject();
+			aesChannel = ClientAuthenticator.authenticate(username, clientConfig, proxySocket, password);
 		}
 		catch(Exception e)
 		{
+			e.printStackTrace();
 			return new LoginResponse(LoginResponse.Type.WRONG_CREDENTIALS);
 		}
+		return new LoginResponse(LoginResponse.Type.SUCCESS);
 	}
 
 	@Override

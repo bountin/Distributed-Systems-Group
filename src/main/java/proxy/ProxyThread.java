@@ -8,20 +8,22 @@ import message.request.CreditsRequest;
 import message.request.DownloadTicketRequest;
 import message.request.ExitRequest;
 import message.request.ListRequest;
-import message.request.LoginRequest;
 import message.request.LogoutRequest;
 import message.request.UploadRequest;
 import message.response.MessageResponse;
 import util.MyUtil;
-import util.SocketThread;
+import util.SecureSocketThread;
+import auth.ProxyAuthenticator;
 
-public class ProxyThread extends SocketThread
+public class ProxyThread extends SecureSocketThread
 {
 	private ProxyManager proxyManager = new ProxyManager();
+	private ProxyConfig proxyConfig;
 
-	public ProxyThread(Socket socket, String name) throws IOException
+	public ProxyThread(Socket socket, String name, ProxyConfig proxyConfig) throws IOException
 	{
 		super(socket, name);
+		this.proxyConfig = proxyConfig;
 	}
 
 	@Override
@@ -29,14 +31,16 @@ public class ProxyThread extends SocketThread
 	{
 		try
 		{
-			Object inRequest, outResponse;
-			while(!socket.isClosed() && (inRequest = in.readObject()) != null)
+			while(aesChannel == null)
+			{
+				aesChannel = ProxyAuthenticator.authenticate(socket, proxyManager, proxyConfig);
+			}
+
+			Object inRequest, outResponse = new MessageResponse("command not found");
+			while(!socket.isClosed() && (inRequest = aesChannel.receiveObject()) != null)
 			{
 				outResponse = new MessageResponse("command \"" + inRequest.toString() + "\" not found on fileserver");
-				if(inRequest instanceof LoginRequest)
-				{
-					outResponse = proxyManager.login((LoginRequest)inRequest);
-				}
+
 				if(inRequest instanceof LogoutRequest)
 				{
 					outResponse = proxyManager.logout();
@@ -66,8 +70,7 @@ public class ProxyThread extends SocketThread
 					outResponse = proxyManager.logout();
 				}
 
-				out.writeObject(outResponse);
-				out.flush();
+				aesChannel.sendObject(outResponse);
 
 				if(inRequest instanceof ExitRequest)
 				{

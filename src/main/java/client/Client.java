@@ -1,10 +1,6 @@
 package client;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 import util.ComponentFactory;
@@ -16,7 +12,6 @@ import cli.ShellThread;
 
 public class Client extends ClientCommands implements Runnable
 {
-	private Socket proxySocket;
 	private ShellThread shellThread;
 	private Shell shell;
 
@@ -43,6 +38,8 @@ public class Client extends ClientCommands implements Runnable
 			MyUtil.writeToShell(shell, "download.dir: the directory to put downloaded files.");
 			MyUtil.writeToShell(shell, "proxy.host: the host name (or an IP address) where the Proxy is running.");
 			MyUtil.writeToShell(shell, "proxy.tcp.port: the TCP port where the server is listening for client connections.");
+			MyUtil.writeToShell(shell, "keys.dir: directory where to look for the user's private key (named <username>.pem).");
+			MyUtil.writeToShell(shell, "proxy.key: file from where to read Proxy's public key.");
 		}
 		Thread thread = new Thread(this);
 		thread.start();
@@ -61,8 +58,6 @@ public class Client extends ClientCommands implements Runnable
 		{
 			// in run method, otherwise getInputStream is blocking
 			proxySocket = new Socket(clientConfig.getProxyHost(), clientConfig.getProxyTcpPort());
-			out = new ObjectOutputStream(new BufferedOutputStream(proxySocket.getOutputStream()));
-			in = new ObjectInputStream(new BufferedInputStream(proxySocket.getInputStream()));
 
 			shell.register(this);
 			shellThread = new ShellThread(shell);
@@ -84,13 +79,9 @@ public class Client extends ClientCommands implements Runnable
 	{
 		try
 		{
-			if(out != null)
+			if(aesChannel != null)
 			{
-				out.close();
-			}
-			if(in != null)
-			{
-				in.close();
+				aesChannel.close();
 			}
 			if(proxySocket != null)
 			{

@@ -1,27 +1,29 @@
 package message;
 
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-
 import message.response.MessageResponse;
+import channel.ObjectChannel;
 
 public class ResponseUtil
 {
-	protected ObjectOutputStream out;
-	protected ObjectInputStream in;
+	protected ObjectChannel aesChannel;
 
-	protected <A extends Response> A send(Request request)
+	@SuppressWarnings("unchecked")
+	protected <R extends Response> R send(Request request)
 	{
 		try
 		{
-			out.writeObject(request);
-			out.flush();
+			// not logged in
+			if(aesChannel == null)
+			{
+				return (R)new MessageResponse("login required");
+			}
+			aesChannel.sendObject(request);
 
-			return (A)in.readObject();
+			return (R)aesChannel.receiveObject();
 		}
 		catch(Exception e)
 		{
-			return (A)new MessageResponse("Error occured (" + e.getMessage() + "), please try again");
+			return (R)new MessageResponse("Error occured (" + e.getMessage() + "), please try again");
 		}
 	}
 

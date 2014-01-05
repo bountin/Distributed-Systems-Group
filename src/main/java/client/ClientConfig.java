@@ -1,6 +1,7 @@
 package client;
 
 import java.io.File;
+import java.security.PublicKey;
 
 import util.Config;
 import util.MyUtil;
@@ -10,17 +11,26 @@ public class ClientConfig
 	private File downloadDir;
 	private String proxyHost;
 	private Integer proxyTcpPort;
+	private File privateKeyDir;
+	private PublicKey publicProxyKey;
 
 	public ClientConfig(Config config) throws Exception
 	{
 		downloadDir = MyUtil.getFile(config, "download.dir");
 		proxyHost = MyUtil.getString(config, "proxy.host");
 		proxyTcpPort = MyUtil.getPort(config, "proxy.tcp.port");
+		privateKeyDir = MyUtil.getDirectory(config, "keys.dir");
+		publicProxyKey = MyUtil.getPublicKey(config, "proxy.key");
 	}
 
 	public File getDownloadDir()
 	{
 		return downloadDir;
+	}
+
+	public File getPrivateKeyDir()
+	{
+		return privateKeyDir;
 	}
 
 	public String getProxyHost()
@@ -33,19 +43,9 @@ public class ClientConfig
 		return proxyTcpPort;
 	}
 
-	public void setDownloadDir(File downloadDir)
+	public PublicKey getPublicProxyKey()
 	{
-		this.downloadDir = downloadDir;
-	}
-
-	public void setProxyHost(String proxyHost)
-	{
-		this.proxyHost = proxyHost;
-	}
-
-	public void setProxyTcpPort(Integer proxyTcpPort)
-	{
-		this.proxyTcpPort = proxyTcpPort;
+		return publicProxyKey;
 	}
 
 }

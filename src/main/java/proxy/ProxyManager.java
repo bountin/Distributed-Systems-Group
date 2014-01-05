@@ -6,17 +6,16 @@ import java.io.IOException;
 import message.Response;
 import message.request.BuyRequest;
 import message.request.DownloadTicketRequest;
-import message.request.LoginRequest;
 import message.request.UploadRequest;
 import message.response.BuyResponse;
 import message.response.CreditsResponse;
 import message.response.DownloadTicketResponse;
 import message.response.ListResponse;
-import message.response.LoginResponse;
 import message.response.MessageResponse;
 import model.DownloadTicket;
 import objects.User;
 import server.FileServerData;
+import auth.AuthenticationException;
 
 public class ProxyManager implements IProxy
 {
@@ -94,20 +93,15 @@ public class ProxyManager implements IProxy
 		return new ListResponse(proxyInfo.getFiles().keySet());
 	}
 
-	@Override
-	public LoginResponse login(LoginRequest request) throws IOException
+	public void login(String username) throws AuthenticationException
 	{
-		User user = proxyInfo.getUsers().get(request.getUsername());
-		if(user == null || !user.getPassword().equals(request.getPassword()))
+		User user = proxyInfo.getUsers().get(username);
+		if(user == null)
 		{
-			return new LoginResponse(LoginResponse.Type.WRONG_CREDENTIALS);
+			throw new AuthenticationException("no user found on proxy");
 		}
-		else
-		{
-			this.user = user;
-			this.user.setOnline(true);
-			return new LoginResponse(LoginResponse.Type.SUCCESS);
-		}
+		this.user = user;
+		this.user.setOnline(true);
 	}
 
 	@Override

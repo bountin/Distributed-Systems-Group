@@ -8,6 +8,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 
 import message.Request;
 import message.Response;
@@ -18,9 +20,25 @@ import cli.Shell;
 public final class MyUtil
 {
 
+	public static File getDirectory(Config config, String key) throws UnvalidConfigException
+	{
+		File file = MyUtil.getFile(config, key);
+		if(!file.isDirectory())
+		{
+			throw new UnvalidConfigException("not a directory: " + key);
+		}
+		return file;
+	}
+
 	public static File getFile(Config config, String key) throws UnvalidConfigException
 	{
-		return new File(MyUtil.getString(config, key));
+		File file = new File(MyUtil.getString(config, key));
+		// TODO check can read?
+		if(!file.exists())
+		{
+			throw new UnvalidConfigException("file " + key + " does not exist!");
+		}
+		return file;
 	}
 
 	public static long getMilliseconds(Config config, String key) throws UnvalidConfigException
@@ -52,6 +70,38 @@ public final class MyUtil
 		catch(NumberFormatException nfe)
 		{
 			throw new UnvalidConfigException("value of " + key + " must be a valid port number!");
+		}
+	}
+
+	public static PrivateKey getPrivateKey(Config config, String key, String password) throws UnvalidConfigException
+	{
+		try
+		{
+			return EncryptionUtil.getPrivateKeyFromFile(MyUtil.getFile(config, key), password);
+		}
+		catch(UnvalidConfigException e)
+		{
+			throw e;
+		}
+		catch(Exception e)
+		{
+			throw new UnvalidConfigException("error reading private key from " + key);
+		}
+	}
+
+	public static PublicKey getPublicKey(Config config, String key) throws UnvalidConfigException
+	{
+		try
+		{
+			return EncryptionUtil.getPublicKeyFromFile(MyUtil.getFile(config, key));
+		}
+		catch(UnvalidConfigException e)
+		{
+			throw e;
+		}
+		catch(Exception e)
+		{
+			throw new UnvalidConfigException("error reading public key from " + key);
 		}
 	}
 
