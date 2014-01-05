@@ -1,10 +1,7 @@
 package server;
 
 import message.Response;
-import message.request.DownloadFileRequest;
-import message.request.InfoRequest;
-import message.request.UploadRequest;
-import message.request.VersionRequest;
+import message.request.*;
 import message.response.*;
 
 import java.io.IOException;

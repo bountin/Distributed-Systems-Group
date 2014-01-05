@@ -29,7 +29,7 @@ public class ProxyThread extends SocketThread
 	{
 		try
 		{
-			Object inRequest, outResponse = new MessageResponse("command not found");
+			Object inRequest, outResponse;
 			while(!socket.isClosed() && (inRequest = in.readObject()) != null)
 			{
 				outResponse = new MessageResponse("command \"" + inRequest.toString() + "\" not found on fileserver");

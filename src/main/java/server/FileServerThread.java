@@ -3,12 +3,7 @@ package server;
 import java.io.IOException;
 import java.net.Socket;
 
-import message.request.DownloadFileRequest;
-import message.request.DownloadForReplicationRequest;
-import message.request.InfoRequest;
-import message.request.ListRequest;
-import message.request.UploadRequest;
-import message.request.VersionRequest;
+import message.request.*;
 import message.response.MessageResponse;
 import util.MyUtil;
 import util.SocketThread;

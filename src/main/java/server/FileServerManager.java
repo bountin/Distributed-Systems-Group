@@ -9,11 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import message.Response;
-import message.request.DownloadFileRequest;
-import message.request.DownloadForReplicationRequest;
-import message.request.InfoRequest;
-import message.request.UploadRequest;
-import message.request.VersionRequest;
+import message.request.*;
 import message.response.DownloadFileResponse;
 import message.response.DownloadForReplicationResponse;
 import message.response.InfoResponse;
