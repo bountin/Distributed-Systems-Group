@@ -85,7 +85,7 @@ public final class MyUtil
 		}
 		catch(Exception e)
 		{
-			throw new UnvalidConfigException("error reading private key from " + key);
+			throw new UnvalidConfigException("error reading private key from " + key + "\nCause: "+e.getMessage());
 		}
 	}
 
@@ -101,7 +101,7 @@ public final class MyUtil
 		}
 		catch(Exception e)
 		{
-			throw new UnvalidConfigException("error reading public key from " + key);
+			throw new UnvalidConfigException("error reading public key from " + key + "\nCause: "+e.getMessage());
 		}
 	}
 
