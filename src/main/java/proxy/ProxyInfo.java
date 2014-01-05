@@ -28,6 +28,7 @@ public class ProxyInfo
 	private Map<String, FileInfo> files = Collections.synchronizedMap(new HashMap<String, FileInfo>());
 
 	private static ProxyInfo instance;
+	private String hmacKeyPath;
 
 	public synchronized static ProxyInfo getInstance()
 	{
@@ -41,6 +42,10 @@ public class ProxyInfo
 	private ProxyInfo()
 	{
 		readUsers();
+	}
+
+	public void setHmacKeyPath(String hmacKeyPath) {
+		this.hmacKeyPath = hmacKeyPath;
 	}
 
 	public synchronized void addFile(FileInfo toAdd)

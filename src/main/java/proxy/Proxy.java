@@ -52,10 +52,13 @@ public class Proxy extends ProxyCommands implements Runnable
 			shell.writeLine("udp.port: the port to be used for instantiating a java.net.DatagramSocket (handling UDP requests from fileservers).");
 			shell.writeLine("fileserver.timeout: the period in milliseconds each fileserver has to send an isAlive packet (only containing the fileserver's TCP port). If no such packet is received within this time, the fileserver is assumed to be offline and is no longer available for handling requests.");
 			shell.writeLine("fileserver.checkPeriod: specifies the number of delay milliseconds to repeatedly test whether a fileserver has timed-out or not (see fileserver.timeout).");
+			shell.writeLine("hmac.key: The path to the secret key that is used to authenticate the proxy's communication with the file servers.");
 			return;
 		}
 		try
 		{
+			ProxyInfo.getInstance().setHmacKeyPath(proxyConfig.getHmacKeyPath());
+
 			proxySocket = new ServerSocket(proxyConfig.getTcpPort());
 
 			Thread thread = new Thread(this);

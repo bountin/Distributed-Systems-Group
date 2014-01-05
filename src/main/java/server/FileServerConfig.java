@@ -12,6 +12,7 @@ public class FileServerConfig
 	private String proxyHost;
 	private Integer proxyUdpPort;
 	private long period;
+	private String hmacKeyPath;
 
 	public FileServerConfig(Config config) throws Exception
 	{
@@ -20,6 +21,7 @@ public class FileServerConfig
 		proxyHost = MyUtil.getString(config, "proxy.host");
 		proxyUdpPort = MyUtil.getPort(config, "proxy.udp.port");
 		period = MyUtil.getMilliseconds(config, "fileserver.alive");
+		hmacKeyPath = MyUtil.getString(config, "hmac.key");
 	}
 
 	public File getDir()
@@ -51,6 +53,8 @@ public class FileServerConfig
 	{
 		this.dir = dir;
 	}
+
+	public String getHmacKeyPath() { return hmacKeyPath; }
 
 	public void setPeriod(long period)
 	{

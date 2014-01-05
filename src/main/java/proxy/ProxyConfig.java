@@ -9,6 +9,7 @@ public class ProxyConfig
 	private Integer udpPort;
 	private Long timeout;
 	private Long checkPeriod;
+	private String hmacKeyPath;
 
 	public ProxyConfig(Config config) throws Exception
 	{
@@ -16,6 +17,7 @@ public class ProxyConfig
 		this.udpPort = MyUtil.getPort(config, "udp.port");
 		this.timeout = MyUtil.getMilliseconds(config, "fileserver.timeout");
 		this.checkPeriod = MyUtil.getMilliseconds(config, "fileserver.checkPeriod");
+		this.hmacKeyPath = MyUtil.getString(config, "hmac.key");
 	}
 
 	public Long getCheckPeriod()
@@ -38,4 +40,5 @@ public class ProxyConfig
 		return udpPort;
 	}
 
+	public String getHmacKeyPath() { return hmacKeyPath; }
 }
