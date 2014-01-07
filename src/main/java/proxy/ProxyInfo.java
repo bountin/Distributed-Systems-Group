@@ -12,12 +12,7 @@ import java.util.Set;
 
 import message.MessageResponseException;
 import message.Response;
-import message.request.DownloadForReplicationRequest;
-import message.request.FileInfoListRequest;
-import message.request.HMACUploadRequest;
-import message.request.ListRequest;
-import message.request.UploadRequest;
-import message.request.VersionRequest;
+import message.request.*;
 import message.response.DownloadForReplicationResponse;
 import message.response.FileInfoListResponse;
 import message.response.ListResponse;
@@ -88,7 +83,7 @@ public class ProxyInfo
 			// minUsageFileServer with newest version of file
 			FileServerData minUsageFileServer = replicationInfo.getLowestReadQuorumWithHighestVersion(filename).getFileServerData();
 
-			Response response = MyUtil.sendRequest(request, minUsageFileServer.getNetworkId());
+			Response response = MyUtil.sendRequest(new HMACDownloadForReplicationRequest(request,hmacKeyPath), minUsageFileServer.getNetworkId());
 			if(response instanceof MessageResponse)
 			{
 				throw new Exception("error downloading file for replication\nfile: " + filename + "\nfileserver: " + data + "\ncause: " + ((MessageResponse)response).getMessage());
@@ -419,7 +414,7 @@ public class ProxyInfo
 	{
 		try
 		{
-			Response response = MyUtil.sendRequest(new ListRequest(), data.getNetworkId());
+			Response response = MyUtil.sendRequest(new HMACListRequest(new ListRequest(), hmacKeyPath), data.getNetworkId());
 			if(response instanceof MessageResponse)
 			{
 				throw new Exception(((MessageResponse)response).getMessage());
@@ -469,7 +464,7 @@ public class ProxyInfo
 		{
 			// download from server with file
 			DownloadForReplicationRequest request = new DownloadForReplicationRequest(filename);
-			Response response = MyUtil.sendRequest(request, fromServer.getNetworkId());
+			Response response = MyUtil.sendRequest(new HMACDownloadForReplicationRequest(request,hmacKeyPath), fromServer.getNetworkId());
 			DownloadForReplicationResponse downloadResponse = (DownloadForReplicationResponse)response;
 
 			addFile(new FileInfo(downloadResponse.getFilename(), downloadResponse.getContent().length, downloadResponse.getVersion()));

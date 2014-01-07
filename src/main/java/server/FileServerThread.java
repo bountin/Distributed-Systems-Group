@@ -3,14 +3,7 @@ package server;
 import java.io.IOException;
 import java.net.Socket;
 
-import message.request.DownloadFileRequest;
-import message.request.DownloadForReplicationRequest;
-import message.request.FileInfoListRequest;
-import message.request.HMACUploadRequest;
-import message.request.InfoRequest;
-import message.request.ListRequest;
-import message.request.UploadRequest;
-import message.request.VersionRequest;
+import message.request.*;
 import message.response.MessageResponse;
 import util.MyUtil;
 import util.SocketThread;
@@ -35,19 +28,25 @@ public class FileServerThread extends SocketThread
 			{
 				if(inRequest instanceof DownloadFileRequest)
 				{
-					outResponse = fileServerManager.download((DownloadFileRequest)inRequest);
+					outResponse = fileServerManager.download((DownloadFileRequest) inRequest);
 				}
 				else if(inRequest instanceof DownloadForReplicationRequest)
 				{
-					outResponse = fileServerManager.downloadForReplication((DownloadForReplicationRequest)inRequest);
+					outResponse = fileServerManager.downloadForReplication((DownloadForReplicationRequest) inRequest);
+				}
+				else if(inRequest instanceof  HMACDownloadForReplicationRequest) {
+					outResponse = fileServerManager.downloadForReplicationHMAC((HMACDownloadForReplicationRequest) inRequest);
 				}
 				else if(inRequest instanceof InfoRequest)
 				{
-					outResponse = fileServerManager.info((InfoRequest)inRequest);
+					outResponse = fileServerManager.info((InfoRequest) inRequest);
 				}
 				else if(inRequest instanceof ListRequest)
 				{
 					outResponse = fileServerManager.list();
+				}
+				else if(inRequest instanceof HMACListRequest) {
+					outResponse = fileServerManager.listHMAC((HMACListRequest) inRequest);
 				}
 				else if(inRequest instanceof FileInfoListRequest)
 				{
@@ -55,15 +54,15 @@ public class FileServerThread extends SocketThread
 				}
 				else if(inRequest instanceof UploadRequest)
 				{
-					outResponse = fileServerManager.upload((UploadRequest)inRequest);
+					outResponse = fileServerManager.upload((UploadRequest) inRequest);
 				}
 				else if(inRequest instanceof HMACUploadRequest)
 				{
-					outResponse = fileServerManager.uploadHMAC((HMACUploadRequest)inRequest);
+					outResponse = fileServerManager.uploadHMAC((HMACUploadRequest) inRequest);
 				}
 				else if(inRequest instanceof VersionRequest)
 				{
-					outResponse = fileServerManager.version((VersionRequest)inRequest);
+					outResponse = fileServerManager.version((VersionRequest) inRequest);
 				}
 				else
 				{

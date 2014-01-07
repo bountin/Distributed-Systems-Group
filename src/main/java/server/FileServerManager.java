@@ -10,12 +10,7 @@ import java.util.Map;
 
 import message.MessageResponseException;
 import message.Response;
-import message.request.DownloadFileRequest;
-import message.request.DownloadForReplicationRequest;
-import message.request.HMACUploadRequest;
-import message.request.InfoRequest;
-import message.request.UploadRequest;
-import message.request.VersionRequest;
+import message.request.*;
 import message.response.DownloadFileResponse;
 import message.response.DownloadForReplicationResponse;
 import message.response.FileInfoListResponse;
@@ -28,7 +23,7 @@ import proxy.FileInfo;
 import util.ChecksumUtils;
 import util.HMACException;
 
-public class FileServerManager implements IFileServer
+public class FileServerManager implements IFileServer, IFileServerHMAC
 {
 	private FileServerConfig fileServerConfig;
 	private Map<String, FileInfo> files = Collections.synchronizedMap(new HashMap<String, FileInfo>());
@@ -37,6 +32,19 @@ public class FileServerManager implements IFileServer
 	{
 		this.fileServerConfig = fileServerConfig;
 		readFiles();
+	}
+
+	private MessageResponse verifyRequestHMAC(AbstractHMACRequest request) {
+		try	{
+			if(request.verify(fileServerConfig.getHmacKeyPath())) {
+				return new MessageResponse("success");
+			} else {
+				System.out.println("Verification of HMAC failed: " + request.toString());
+				return new MessageResponse("Verification of HMAC failed");
+			}
+		} catch (HMACException e) {
+			return new MessageResponse("Generating HMAC failed");
+		}
 	}
 
 	@Override
@@ -100,6 +108,15 @@ public class FileServerManager implements IFileServer
 		return new DownloadForReplicationResponse(request.getFilename(), file.getContent(), file.getVersion());
 	}
 
+	public synchronized Response downloadForReplicationHMAC(HMACDownloadForReplicationRequest request) throws IOException {
+		MessageResponse response = verifyRequestHMAC(request);
+		if (response.getMessage().contains("success")) {
+			return downloadForReplication((DownloadForReplicationRequest)request.getRequest());
+		} else {
+			return response;
+		}
+	}
+
 	public synchronized Response fileInfoList() throws IOException
 	{
 		return new FileInfoListResponse(files.values());
@@ -130,6 +147,16 @@ public class FileServerManager implements IFileServer
 	public synchronized Response list() throws IOException
 	{
 		return new ListResponse(files.keySet());
+	}
+
+	public synchronized Response listHMAC(HMACListRequest request) throws IOException
+	{
+		MessageResponse response = verifyRequestHMAC(request);
+		if (response.getMessage().contains("success")) {
+			return list();
+		} else {
+			return response;
+		}
 	}
 
 	private void readFiles()
@@ -163,21 +190,11 @@ public class FileServerManager implements IFileServer
 	@Override
 	public MessageResponse uploadHMAC(HMACUploadRequest request) throws IOException
 	{
-		try
-		{
-			if(request.verify(fileServerConfig.getHmacKeyPath()))
-			{
-				return upload((UploadRequest)request.getRequest());
-			}
-			else
-			{
-				System.out.println("Verification of HMAC failed: " + request.toString());
-				return new MessageResponse("Verification of HMAC failed");
-			}
-		}
-		catch(HMACException e)
-		{
-			return new MessageResponse("Generating HMAC failed");
+		MessageResponse response = verifyRequestHMAC(request);
+		if (response.getMessage().contains("success")) {
+			return upload((UploadRequest)request.getRequest());
+		} else {
+			return response;
 		}
 	}
 
@@ -196,5 +213,4 @@ public class FileServerManager implements IFileServer
 		}
 		return new VersionResponse(filename, version);
 	}
-
 }

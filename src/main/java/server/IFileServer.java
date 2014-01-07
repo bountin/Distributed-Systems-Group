@@ -88,18 +88,4 @@ public interface IFileServer {
 	 * @throws IOException if an I/O error occurs
 	 */
 	MessageResponse upload(UploadRequest request) throws IOException;
-
-	/**
-	 * Verifies the HMAC and saves the file to the shared directory.
-	 * <p/>
-	 * <b>Request</b>:<br/>
-	 * {@code &lt;HMAC&gt; !upload &lt;filename&gt; &lt;content&gt;}<br/>
-	 * <b>Response:</b><br/>
-	 * {@code !upload &lt;message&gt;}<br/>
-	 *
-	 * @param request the request containing the file to upload
-	 * @return message stating whether the upload was successful
-	 * @throws IOException if an I/O error occurs
-	 */
-	MessageResponse uploadHMAC(HMACUploadRequest request) throws IOException;
 }

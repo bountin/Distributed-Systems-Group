@@ -6,7 +6,7 @@ import util.HMACException;
  * Uploads the file with the given name.
  * <p/>
  * <b>Request</b>:<br/>
- * {@code &lt;HMAC&gt; </>!upload &lt;filename&gt; &lt;content&gt;}<br/>
+ * {@code &lt;HMAC&gt; !upload &lt;filename&gt; &lt;content&gt;}<br/>
  * <b>Response:</b><br/>
  * {@code !upload &lt;message&gt;}<br/>
  */
