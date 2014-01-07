@@ -18,7 +18,7 @@ import cli.TestInputStream;
 import cli.TestOutputStream;
 import client.IClientCli;
 
-public class SimpleTest
+public class TestLoginTwice
 {
 	static ComponentFactory componentFactory = new ComponentFactory();
 	IProxyCli proxy;
@@ -77,24 +77,8 @@ public class SimpleTest
 		String expected = "success";
 		assertTrue(String.format("Response must contain '%s' but was '%s'", expected, actual), actual.contains(expected));
 
-		actual = client.credits().toString();
-		expected = "200";
-		assertTrue(String.format("Response must contain '%s' but was '%s'", expected, actual), actual.contains(expected));
-
-		actual = client.download("short.txt").toString();
-		expected = "!data dslab13";
-		assertTrue(String.format("Response must start with '%s' but was '%s'", expected, actual), actual.startsWith(expected));
-
-		actual = client.credits().toString();
-		expected = "192";
-		assertTrue(String.format("Response must contain '%s' but was '%s'", expected, actual), actual.contains(expected));
-
-		actual = client.upload("upload.txt").toString();
-		expected = "success";
-		assertTrue(String.format("Response must contain '%s' but was '%s'", expected, actual), actual.contains(expected));
-
-		actual = client.credits().toString();
-		expected = "292";
+		actual = client.login("alice", "12345").toString();
+		expected = "already_logged_in";
 		assertTrue(String.format("Response must contain '%s' but was '%s'", expected, actual), actual.contains(expected));
 
 		actual = client.logout().toString();

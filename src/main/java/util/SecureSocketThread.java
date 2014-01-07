@@ -18,12 +18,12 @@ public class SecureSocketThread extends Thread
 
 	public void shutdown()
 	{
+		if(aesChannel != null)
+		{
+			aesChannel.close();
+		}
 		try
 		{
-			if(aesChannel != null)
-			{
-				aesChannel.close();
-			}
 			if(socket != null)
 			{
 				socket.close();
@@ -33,7 +33,6 @@ public class SecureSocketThread extends Thread
 		{
 			MyUtil.printStackTrace(e);
 		}
-		// System.err.println(this.getName() + " CLOSED");
 	}
 
 }

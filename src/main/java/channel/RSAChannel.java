@@ -19,6 +19,13 @@ public class RSAChannel extends ChannelDecorator
 	}
 
 	@Override
+	public void close()
+	{
+		publicKey = null;
+		privateKey = null;
+	}
+
+	@Override
 	public byte[] receiveBytes() throws IOException
 	{
 		byte[] response = super.receiveBytes();

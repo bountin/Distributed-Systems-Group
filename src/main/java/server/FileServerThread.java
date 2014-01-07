@@ -3,7 +3,14 @@ package server;
 import java.io.IOException;
 import java.net.Socket;
 
-import message.request.*;
+import message.request.DownloadFileRequest;
+import message.request.DownloadForReplicationRequest;
+import message.request.FileInfoListRequest;
+import message.request.HMACUploadRequest;
+import message.request.InfoRequest;
+import message.request.ListRequest;
+import message.request.UploadRequest;
+import message.request.VersionRequest;
 import message.response.MessageResponse;
 import util.MyUtil;
 import util.SocketThread;
@@ -26,21 +33,40 @@ public class FileServerThread extends SocketThread
 			Object inRequest, outResponse;
 			if(!socket.isClosed() && (inRequest = in.readObject()) != null)
 			{
-				if (inRequest instanceof DownloadFileRequest) {
+				if(inRequest instanceof DownloadFileRequest)
+				{
 					outResponse = fileServerManager.download((DownloadFileRequest)inRequest);
-				} else if (inRequest instanceof DownloadForReplicationRequest) {
+				}
+				else if(inRequest instanceof DownloadForReplicationRequest)
+				{
 					outResponse = fileServerManager.downloadForReplication((DownloadForReplicationRequest)inRequest);
-				} else if (inRequest instanceof InfoRequest) {
+				}
+				else if(inRequest instanceof InfoRequest)
+				{
 					outResponse = fileServerManager.info((InfoRequest)inRequest);
-				} else if(inRequest instanceof ListRequest) {
+				}
+				else if(inRequest instanceof ListRequest)
+				{
 					outResponse = fileServerManager.list();
-				} else if(inRequest instanceof UploadRequest) {
+				}
+				else if(inRequest instanceof FileInfoListRequest)
+				{
+					outResponse = fileServerManager.fileInfoList();
+				}
+				else if(inRequest instanceof UploadRequest)
+				{
 					outResponse = fileServerManager.upload((UploadRequest)inRequest);
-				} else if(inRequest instanceof HMACUploadRequest) {
+				}
+				else if(inRequest instanceof HMACUploadRequest)
+				{
 					outResponse = fileServerManager.uploadHMAC((HMACUploadRequest)inRequest);
-				} else if(inRequest instanceof VersionRequest) {
+				}
+				else if(inRequest instanceof VersionRequest)
+				{
 					outResponse = fileServerManager.version((VersionRequest)inRequest);
-				} else {
+				}
+				else
+				{
 					outResponse = new MessageResponse("Request \"" + inRequest.getClass().getName() + "\" is not supported by this fileserver");
 				}
 

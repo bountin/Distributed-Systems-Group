@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.net.Socket;
 
 import message.Response;
-import util.MyUtil;
 
 public class TCPChannel implements Channel
 {
@@ -28,16 +27,18 @@ public class TCPChannel implements Channel
 			{
 				out.close();
 			}
+		}
+		catch(Exception e)
+		{}
+		try
+		{
 			if(in != null)
 			{
 				in.close();
 			}
 		}
 		catch(Exception e)
-		{
-			MyUtil.printStackTrace(e);
-		}
-
+		{}
 	}
 
 	@Override

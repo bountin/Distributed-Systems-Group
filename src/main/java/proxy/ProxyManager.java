@@ -2,7 +2,9 @@ package proxy;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
 
+import message.MessageResponseException;
 import message.Response;
 import message.request.BuyRequest;
 import message.request.DownloadTicketRequest;
@@ -51,11 +53,24 @@ public class ProxyManager implements IProxy
 			return new MessageResponse("login required");
 		}
 		long filesize;
-		FileServerData fileServerData = proxyInfo.getFileServerWithLowestUsage();
-		if(fileServerData == null)
+
+		String filename = request.getFilename();
+
+		Integer highestVersion = null;
+		FileServerData minUsageFileServer = null;
+
+		try
 		{
-			return new MessageResponse("no fileserver available");
+			// set highestVersion and minUsageFileServer
+			VersionFileServerData verionFileServer = proxyInfo.getReplicationInfo().getLowestReadQuorumWithHighestVersion(filename);
+			highestVersion = verionFileServer.getVersion();
+			minUsageFileServer = verionFileServer.getFileServerData();
 		}
+		catch(MessageResponseException e)
+		{
+			return new MessageResponse(e.getMessage());
+		}
+
 		try
 		{
 			filesize = proxyInfo.getFileSize(request.getFilename());
@@ -74,12 +89,10 @@ public class ProxyManager implements IProxy
 			return new MessageResponse("credits not verifiable");
 		}
 
-		// TODO lab2 version not 0
-		int version = 0;
-		String checkSum = util.ChecksumUtils.generateChecksum(user.getUsername(), request.getFilename(), version, filesize);
-		DownloadTicket downloadTicket = new DownloadTicket(user.getUsername(), request.getFilename(), checkSum, fileServerData.getNetworkId().getAddress(), fileServerData.getNetworkId().getPort());
+		String checkSum = util.ChecksumUtils.generateChecksum(user.getUsername(), request.getFilename(), highestVersion, filesize);
+		DownloadTicket downloadTicket = new DownloadTicket(user.getUsername(), request.getFilename(), checkSum, minUsageFileServer.getNetworkId().getAddress(), minUsageFileServer.getNetworkId().getPort());
 		proxyInfo.decreaseCredits(user, filesize);
-
+		proxyInfo.increaseUsage(minUsageFileServer, filesize);
 		return new DownloadTicketResponse(downloadTicket);
 	}
 
@@ -123,13 +136,34 @@ public class ProxyManager implements IProxy
 		{
 			return new MessageResponse("login required");
 		}
-		MessageResponse response = proxyInfo.sendUploadRequestToServers(request, proxyInfo.getFileServerData().keySet());
+
+		// get version from read quorum servers and update request
+		int version;
+		try
+		{
+			version = proxyInfo.getNextFileVersion(request.getFilename());
+			request = new UploadRequest(request.getFilename(), version, request.getContent());
+		}
+		catch(Exception e)
+		{
+			return new MessageResponse("error requesting current file version\ncause: " + e.getMessage());
+		}
+
+		// send to write quorum servers
+		List<FileServerData> fileServersToWrite = proxyInfo.getWriteQuorumServers();
+		MessageResponse response = proxyInfo.sendUploadRequestToServers(request, fileServersToWrite);
 		if(!response.getMessage().equals("success"))
 		{
 			return response;
 		}
-		proxyInfo.addFile(new FileInfo(request.getFilename(), request.getContent().length, request.getVersion()));
+
+		// update infos
+		proxyInfo.addFile(new FileInfo(request.getFilename(), request.getContent().length, version));
 		proxyInfo.increaseCredits(user, request.getContent().length * 2);
+		for(FileServerData data : fileServersToWrite)
+		{
+			proxyInfo.decreaseUsage(data.getNetworkId(), request.getContent().length * 2);
+		}
 		return response;
 	}
 }

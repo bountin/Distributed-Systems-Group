@@ -7,6 +7,7 @@ import java.net.DatagramSocket;
 import java.util.Timer;
 
 import server.IsAlivePacket;
+import util.MyUtil;
 
 public class IsAliveHandler extends Thread
 {
@@ -50,12 +51,10 @@ public class IsAliveHandler extends Thread
 
 			catch(Exception e)
 			{
-				if(!e.getMessage().equals("socket closed"))
-				{
-					e.printStackTrace();
-				}
+				MyUtil.printStackTrace(e);
 			}
 		}
+		shutdown();
 	}
 
 	public synchronized void setClosed(boolean closed)

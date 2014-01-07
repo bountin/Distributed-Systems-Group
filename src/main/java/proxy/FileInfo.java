@@ -1,7 +1,10 @@
 package proxy;
 
-public class FileInfo
+import java.io.Serializable;
+
+public class FileInfo implements Serializable
 {
+	private static final long serialVersionUID = 2237473122054003017L;
 	private String filename;
 	private long size;
 	private int version;

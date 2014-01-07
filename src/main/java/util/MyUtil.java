@@ -13,7 +13,6 @@ import java.security.PublicKey;
 
 import message.Request;
 import message.Response;
-import message.response.MessageResponse;
 import server.NetworkId;
 import cli.Shell;
 
@@ -85,7 +84,7 @@ public final class MyUtil
 		}
 		catch(Exception e)
 		{
-			throw new UnvalidConfigException("error reading private key from " + key + "\nCause: "+e.getMessage());
+			throw new UnvalidConfigException("error reading private key from " + key + "\nCause: " + e.getMessage());
 		}
 	}
 
@@ -101,7 +100,7 @@ public final class MyUtil
 		}
 		catch(Exception e)
 		{
-			throw new UnvalidConfigException("error reading public key from " + key + "\nCause: "+e.getMessage());
+			throw new UnvalidConfigException("error reading public key from " + key + "\nCause: " + e.getMessage());
 		}
 	}
 
@@ -130,7 +129,7 @@ public final class MyUtil
 
 	}
 
-	public static Response sendRequest(Request object, InetAddress inetAddress, Integer port, String errorMessage)
+	public static Response sendRequest(Request object, InetAddress inetAddress, Integer port) throws Exception
 	{
 		Socket socket = null;
 		ObjectOutputStream oos = null;
@@ -146,10 +145,7 @@ public final class MyUtil
 
 			return (Response)ois.readObject();
 		}
-		catch(Exception e)
-		{
-			return new MessageResponse(errorMessage + e.getMessage());
-		}
+
 		finally
 		{
 			try
@@ -173,9 +169,9 @@ public final class MyUtil
 
 	}
 
-	public static Response sendRequest(Request request, NetworkId networkId, String errorMessage)
+	public static Response sendRequest(Request request, NetworkId networkId) throws Exception
 	{
-		return sendRequest(request, networkId.getAddress(), networkId.getPort(), errorMessage);
+		return sendRequest(request, networkId.getAddress(), networkId.getPort());
 	}
 
 	public static void writeToShell(Shell shell, String string)

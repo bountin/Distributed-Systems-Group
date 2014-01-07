@@ -20,11 +20,13 @@ public class DownloadForReplicationResponse implements Response
 	private static final Charset CHARSET = Charset.forName("ISO-8859-1");
 	private final String filename;
 	private final byte[] content;
+	private final int version;
 
-	public DownloadForReplicationResponse(String filename, byte[] content)
+	public DownloadForReplicationResponse(String filename, byte[] content, int version)
 	{
 		this.filename = filename;
 		this.content = content;
+		this.version = version;
 	}
 
 	public byte[] getContent()
@@ -37,9 +39,14 @@ public class DownloadForReplicationResponse implements Response
 		return filename;
 	}
 
+	public int getVersion()
+	{
+		return version;
+	}
+
 	@Override
 	public String toString()
 	{
-		return "!datareplication " + new String(getContent(), CHARSET);
+		return "!datareplication " + getVersion() + " " + new String(getContent(), CHARSET);
 	}
 }

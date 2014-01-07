@@ -11,35 +11,42 @@ import message.Response;
  * {@code !login success}<br/>
  * or<br/>
  * {@code !login wrong_credentials}
- *
+ * 
  * @see message.request.LoginRequest
  */
-public class LoginResponse implements Response {
-	private static final long serialVersionUID = 3134831924072300109L;
-
-	public enum Type {
+public class LoginResponse implements Response
+{
+	public enum Type
+	{
 		SUCCESS("Successfully logged in."),
-		WRONG_CREDENTIALS("Wrong username or password.");
+		WRONG_CREDENTIALS("Wrong username or password."),
+		ALREADY_LOGGED_IN("you are already logged in");
 
 		String message;
 
-		Type(String message) {
+		Type(String message)
+		{
 			this.message = message;
 		}
 	}
 
+	private static final long serialVersionUID = 3134831924072300109L;
+
 	private final Type type;
 
-	public LoginResponse(Type type) {
+	public LoginResponse(Type type)
+	{
 		this.type = type;
 	}
 
-	public Type getType() {
+	public Type getType()
+	{
 		return type;
 	}
 
 	@Override
-	public String toString() {
+	public String toString()
+	{
 		return "!login " + getType().name().toLowerCase();
 	}
 }

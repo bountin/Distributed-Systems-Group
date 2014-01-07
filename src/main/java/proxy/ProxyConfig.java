@@ -16,13 +16,13 @@ public class ProxyConfig
 	private File publicKeyDir;
 	private String hmacKeyPath;
 
-	public ProxyConfig(Config config) throws Exception
+	public ProxyConfig(Config config, String password) throws Exception
 	{
 		this.tcpPort = MyUtil.getPort(config, "tcp.port");
 		this.udpPort = MyUtil.getPort(config, "udp.port");
 		this.timeout = MyUtil.getMilliseconds(config, "fileserver.timeout");
 		this.checkPeriod = MyUtil.getMilliseconds(config, "fileserver.checkPeriod");
-		this.privateKey = MyUtil.getPrivateKey(config, "key", "12345");
+		this.privateKey = MyUtil.getPrivateKey(config, "key", password);
 		this.publicKeyDir = MyUtil.getDirectory(config, "keys.dir");
 		this.hmacKeyPath = MyUtil.getString(config, "hmac.key");
 	}
@@ -30,6 +30,11 @@ public class ProxyConfig
 	public Long getCheckPeriod()
 	{
 		return checkPeriod;
+	}
+
+	public String getHmacKeyPath()
+	{
+		return hmacKeyPath;
 	}
 
 	public PrivateKey getPrivateKey()
@@ -56,6 +61,4 @@ public class ProxyConfig
 	{
 		return udpPort;
 	}
-
-	public String getHmacKeyPath() { return hmacKeyPath; }
 }

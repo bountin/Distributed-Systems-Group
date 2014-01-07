@@ -3,6 +3,8 @@ package test;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
@@ -18,11 +20,11 @@ import cli.TestInputStream;
 import cli.TestOutputStream;
 import client.IClientCli;
 
-public class SimpleTest
+public class TestDownloadFileFromEveryServer
 {
 	static ComponentFactory componentFactory = new ComponentFactory();
 	IProxyCli proxy;
-	IFileServerCli server;
+	List<IFileServerCli> servers = new ArrayList<IFileServerCli>();
 	IClientCli client;
 
 	@After
@@ -39,7 +41,10 @@ public class SimpleTest
 		}
 		try
 		{
-			server.exit();
+			for(IFileServerCli server : servers)
+			{
+				server.exit();
+			}
 		}
 		catch(IOException e)
 		{
@@ -63,8 +68,11 @@ public class SimpleTest
 		proxy = componentFactory.startProxy(new Config("proxy"), new Shell("proxy", new TestOutputStream(System.out), new TestInputStream()));
 		Thread.sleep(Util.WAIT_FOR_COMPONENT_STARTUP);
 
-		server = componentFactory.startFileServer(new Config("fs1"), new Shell("fs1", new TestOutputStream(System.out), new TestInputStream()));
-		Thread.sleep(Util.WAIT_FOR_COMPONENT_STARTUP);
+		for(int i = 1; i <= 5; i++)
+		{
+			servers.add(componentFactory.startFileServer(new Config("fs" + i), new Shell("fs" + i, new TestOutputStream(System.out), new TestInputStream())));
+			Thread.sleep(Util.WAIT_FOR_COMPONENT_STARTUP);
+		}
 
 		client = componentFactory.startClient(new Config("client"), new Shell("client", new TestOutputStream(System.out), new TestInputStream()));
 		Thread.sleep(Util.WAIT_FOR_COMPONENT_STARTUP);
@@ -77,25 +85,25 @@ public class SimpleTest
 		String expected = "success";
 		assertTrue(String.format("Response must contain '%s' but was '%s'", expected, actual), actual.contains(expected));
 
-		actual = client.credits().toString();
-		expected = "200";
-		assertTrue(String.format("Response must contain '%s' but was '%s'", expected, actual), actual.contains(expected));
-
-		actual = client.download("short.txt").toString();
-		expected = "!data dslab13";
+		actual = client.download("fs1.txt").toString();
+		expected = "!data fileserver1 filecontent";
 		assertTrue(String.format("Response must start with '%s' but was '%s'", expected, actual), actual.startsWith(expected));
 
-		actual = client.credits().toString();
-		expected = "192";
-		assertTrue(String.format("Response must contain '%s' but was '%s'", expected, actual), actual.contains(expected));
+		actual = client.download("fs2.txt").toString();
+		expected = "!data fileserver2 filecontent";
+		assertTrue(String.format("Response must start with '%s' but was '%s'", expected, actual), actual.startsWith(expected));
 
-		actual = client.upload("upload.txt").toString();
-		expected = "success";
-		assertTrue(String.format("Response must contain '%s' but was '%s'", expected, actual), actual.contains(expected));
+		actual = client.download("fs3.txt").toString();
+		expected = "!data fileserver3 filecontent";
+		assertTrue(String.format("Response must start with '%s' but was '%s'", expected, actual), actual.startsWith(expected));
 
-		actual = client.credits().toString();
-		expected = "292";
-		assertTrue(String.format("Response must contain '%s' but was '%s'", expected, actual), actual.contains(expected));
+		actual = client.download("fs4.txt").toString();
+		expected = "!data fileserver4 filecontent";
+		assertTrue(String.format("Response must start with '%s' but was '%s'", expected, actual), actual.startsWith(expected));
+
+		actual = client.download("fs5.txt").toString();
+		expected = "!data fileserver5 filecontent";
+		assertTrue(String.format("Response must start with '%s' but was '%s'", expected, actual), actual.startsWith(expected));
 
 		actual = client.logout().toString();
 		expected = "Successfully logged out.";

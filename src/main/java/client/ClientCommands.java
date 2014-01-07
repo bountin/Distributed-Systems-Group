@@ -59,10 +59,14 @@ public abstract class ClientCommands extends ResponseUtil implements IClientCli
 		DownloadTicketResponse downloadTicketResponse = (DownloadTicketResponse)response;
 
 		// request file
-		response = sendDownloadFileRequest(downloadTicketResponse.getTicket());
-		if(response.getClass().equals(MessageResponse.class))
+		DownloadTicket ticket = downloadTicketResponse.getTicket();
+		try
 		{
-			return (MessageResponse)response;
+			response = MyUtil.sendRequest(new DownloadFileRequest(ticket), ticket.getAddress(), ticket.getPort());
+		}
+		catch(Exception e)
+		{
+			return new MessageResponse("error sending downloadticket to fileserver\n cause: " + e.getMessage());
 		}
 		DownloadFileResponse downloadFileResponse = (DownloadFileResponse)response;
 		try
@@ -117,6 +121,10 @@ public abstract class ClientCommands extends ResponseUtil implements IClientCli
 	@Command
 	public LoginResponse login(String username, String password)
 	{
+		if(aesChannel != null)
+		{
+			return new LoginResponse(LoginResponse.Type.ALREADY_LOGGED_IN);
+		}
 		try
 		{
 			aesChannel = ClientAuthenticator.authenticate(username, clientConfig, proxySocket, password);
@@ -133,12 +141,14 @@ public abstract class ClientCommands extends ResponseUtil implements IClientCli
 	@Command
 	public MessageResponse logout()
 	{
-		return send(new LogoutRequest());
-	}
-
-	public Response sendDownloadFileRequest(DownloadTicket ticket)
-	{
-		return MyUtil.sendRequest(new DownloadFileRequest(ticket), ticket.getAddress(), ticket.getPort(), "error sending downloadticket to fileserver: ");
+		try
+		{
+			return send(new LogoutRequest());
+		}
+		finally
+		{
+			aesChannel = null;
+		}
 	}
 
 	public abstract void shutdown();

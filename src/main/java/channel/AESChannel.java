@@ -19,6 +19,13 @@ public class AESChannel extends ChannelDecorator
 	}
 
 	@Override
+	public void close()
+	{
+		decrypter = null;
+		encrypter = null;
+	}
+
+	@Override
 	public byte[] receiveBytes() throws IOException
 	{
 		byte[] response = super.receiveBytes();
@@ -30,6 +37,5 @@ public class AESChannel extends ChannelDecorator
 	{
 		byte[] base64Message = EncryptionUtil.crypt(encrypter, request);
 		super.sendBytes(base64Message);
-
 	}
 }

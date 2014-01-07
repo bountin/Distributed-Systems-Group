@@ -34,11 +34,11 @@ public class Proxy extends ProxyCommands implements Runnable
 		}
 	}
 
-	public Proxy(Config config, Shell shell) throws UnvalidConfigException, IOException
+	public Proxy(Config config, Shell shell, String password) throws UnvalidConfigException, IOException
 	{
 		try
 		{
-			this.proxyConfig = new ProxyConfig(config);
+			this.proxyConfig = new ProxyConfig(config, password);
 		}
 		catch(UnvalidConfigException ue)
 		{
@@ -78,7 +78,7 @@ public class Proxy extends ProxyCommands implements Runnable
 		catch(IOException e)
 		{
 			System.err.printf("Could not listen on port: %d.", proxyConfig.getTcpPort());
-			System.err.println(e);
+			System.err.println("Cause: " + e);
 		}
 	}
 

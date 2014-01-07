@@ -5,18 +5,24 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
 
+import message.MessageResponseException;
 import message.Response;
 import message.request.DownloadForReplicationRequest;
+import message.request.FileInfoListRequest;
 import message.request.HMACUploadRequest;
 import message.request.ListRequest;
 import message.request.UploadRequest;
+import message.request.VersionRequest;
 import message.response.DownloadForReplicationResponse;
+import message.response.FileInfoListResponse;
 import message.response.ListResponse;
 import message.response.MessageResponse;
+import message.response.VersionResponse;
 import objects.User;
 import server.FileServerData;
 import server.NetworkId;
@@ -28,6 +34,7 @@ public class ProxyInfo
 	private Map<String, User> users = Collections.synchronizedMap(new HashMap<String, User>());
 	private Map<NetworkId, FileServerData> fileServerData = Collections.synchronizedMap(new HashMap<NetworkId, FileServerData>());
 	private Map<String, FileInfo> files = Collections.synchronizedMap(new HashMap<String, FileInfo>());
+	private ReplicationManager replicationInfo;
 
 	private static ProxyInfo instance;
 	private String hmacKeyPath;
@@ -46,25 +53,9 @@ public class ProxyInfo
 		readUsers();
 	}
 
-	public void setHmacKeyPath(String hmacKeyPath) {
-		this.hmacKeyPath = hmacKeyPath;
-	}
-
-	public synchronized void addFile(FileInfo toAdd)
+	public synchronized void addFile(FileInfo filenInfo)
 	{
-		FileInfo fileInfo = files.get(toAdd.getFilename());
-		if(fileInfo != null)
-		{
-			// if newer version is uploaded
-			if(fileInfo.getVersion() < toAdd.getVersion())
-			{
-				files.put(toAdd.getFilename(), toAdd);
-			}
-		}
-		else
-		{
-			files.put(toAdd.getFilename(), toAdd);
-		}
+		files.put(filenInfo.getFilename(), filenInfo);
 	}
 
 	public synchronized void decreaseCredits(User user, long filesize)
@@ -77,27 +68,38 @@ public class ProxyInfo
 
 	}
 
-	private synchronized void downloadNewFiles(Set<String> filesToDownload, FileServerData data) throws Exception
+	public void decreaseUsage(NetworkId networkId, long filesize)
 	{
+		FileServerData f = fileServerData.get(networkId);
+		if(f != null)
+		{
+			f.setUsage(f.getUsage() - filesize);
+		}
+
+	}
+
+	private synchronized void downloadFilesToStartUpServer(Set<String> filesToDownload, FileServerData data) throws Exception
+	{
+		// TODO version from readquroum upload to writequorum or only new server?
 		for(String filename : filesToDownload)
 		{
 			// download from server with lowest usage
 			DownloadForReplicationRequest request = new DownloadForReplicationRequest(filename);
-			NetworkId networkId = getFileServerWithLowestUsage().getNetworkId();
-			Response response = MyUtil.sendRequest(request, networkId, "download for replication failed");
-			if(response.getClass().equals(MessageResponse.class))
+			// minUsageFileServer with newest version of file
+			FileServerData minUsageFileServer = replicationInfo.getLowestReadQuorumWithHighestVersion(filename).getFileServerData();
+
+			Response response = MyUtil.sendRequest(request, minUsageFileServer.getNetworkId());
+			if(response instanceof MessageResponse)
 			{
-				throw new Exception(((MessageResponse)response).getMessage());
+				throw new Exception("error downloading file for replication\nfile: " + filename + "\nfileserver: " + data + "\ncause: " + ((MessageResponse)response).getMessage());
 			}
 			DownloadForReplicationResponse downloadResponse = (DownloadForReplicationResponse)response;
 
 			// upload to server without file
-			// TODO lab2 version not 0
-			int version = 0;
-			UploadRequest uploadRequest = new UploadRequest(downloadResponse.getFilename(), version, downloadResponse.getContent());
-			Set<NetworkId> fileServerIds = getOnlineFileServerIds();
-			fileServerIds.add(data.getNetworkId());
-			sendUploadRequestToServers(uploadRequest, fileServerIds);
+			UploadRequest uploadRequest = new UploadRequest(downloadResponse.getFilename(), downloadResponse.getVersion(), downloadResponse.getContent());
+			List<FileServerData> fileServerData = getWriteQuorumServers();
+			// fileServerData.add(data);
+			sendUploadRequestToServers(uploadRequest, fileServerData);
 		}
 
 	}
@@ -167,6 +169,60 @@ public class ProxyInfo
 		}
 	}
 
+	public Map<String, FileInfo> getMergedListRequest(List<FileServerData> newReadQuorumServers)
+	{
+		Map<String, FileInfo> mergedFileInfos = new HashMap<String, FileInfo>();
+		for(FileServerData fileServerData : newReadQuorumServers)
+		{
+			try
+			{
+				Response response = MyUtil.sendRequest(new FileInfoListRequest(), fileServerData.getNetworkId());
+
+				if(response instanceof MessageResponse)
+				{
+					continue;
+				}
+				FileInfoListResponse fileInfoListResponse = (FileInfoListResponse)response;
+				for(FileInfo fileInfo : fileInfoListResponse.getFileInfos())
+				{
+					if(isFileInfoNewerThanInMap(fileInfo, mergedFileInfos))
+					{
+						mergedFileInfos.put(fileInfo.getFilename(), fileInfo);
+					}
+				}
+			}
+			catch(Exception e)
+			{
+				// do nothing
+				e.printStackTrace();
+			}
+		}
+		return mergedFileInfos;
+	}
+
+	public int getNextFileVersion(String filename) throws Exception
+	{
+		List<FileServerData> fileServers = getReplicationInfo().getReadQuorumServers();
+		int version = -1;
+		for(FileServerData fileServerData : fileServers)
+		{
+			VersionRequest versionRequest = new VersionRequest(filename);
+			Response response = MyUtil.sendRequest(versionRequest, fileServerData.getNetworkId());
+			if(response instanceof MessageResponse)
+			{
+				if(((MessageResponse)response).getMessage().equals("file not found on server"))
+				{
+					continue;
+				}
+				throw new Exception(((MessageResponse)response).getMessage());
+			}
+			VersionResponse versionResponse = (VersionResponse)response;
+
+			version = Math.max(version, versionResponse.getVersion());
+		}
+		return version + 1;
+	}
+
 	public synchronized Set<NetworkId> getOnlineFileServerIds()
 	{
 		Set<NetworkId> onlineFileServers = new HashSet<NetworkId>();
@@ -181,20 +237,65 @@ public class ProxyInfo
 		return onlineFileServers;
 	}
 
+	public List<FileServerData> getReadQuorumServers()
+	{
+		return getReplicationInfo().getReadQuorumServers();
+	}
+
+	public ReplicationManager getReplicationInfo()
+	{
+		if(replicationInfo == null)
+		{
+			replicationInfo = new ReplicationManager(this);
+		}
+		return replicationInfo;
+	}
+
 	public synchronized Map<String, User> getUsers()
 	{
 		return users;
 	}
 
-	public synchronized Long increaseCredits(User user, long credits)
+	public List<FileServerData> getWriteQuorumServers()
+	{
+		return getReplicationInfo().getWriteQuorumServers();
+	}
+
+	public synchronized void increaseCredits(User user, long credits)
 	{
 		User u = users.get(user.getUsername());
 		if(u != null)
 		{
 			u.setCredits(u.getCredits() + credits);
-			return u.getCredits();
 		}
-		return null;
+	}
+
+	public void increaseUsage(FileServerData fileServer, long filesize)
+	{
+		FileServerData f = fileServerData.get(fileServer.getNetworkId());
+		if(f != null)
+		{
+			f.setUsage(f.getUsage() + filesize);
+		}
+	}
+
+	public boolean isFileInfoNewerThanInMap(FileInfo info, Map<String, FileInfo> filesAlreadyOnOtherServers)
+	{
+		FileInfo f = filesAlreadyOnOtherServers.get(info.getFilename());
+		// file exists on other servers
+		if(f != null)
+		{
+			// only upload newer version than on other servers
+			if(info.getVersion() > f.getVersion())
+			{
+				return true;
+			}
+			return false;
+		}
+		else
+		{
+			return true;
+		}
 	}
 
 	private synchronized void readUsers()
@@ -239,69 +340,41 @@ public class ProxyInfo
 		}
 	}
 
-	private synchronized Response sendListRequest(FileServerData data)
+	public synchronized MessageResponse sendUploadRequestToServers(UploadRequest request, List<FileServerData> fileServers)
 	{
-		Response response = MyUtil.sendRequest(new ListRequest(), data.getNetworkId(), "error sending list request");
-		if(response.getClass().equals(MessageResponse.class))
-		{
-			return response;
-		}
-		ListResponse listResponse = (ListResponse)response;
-		Set<String> filesOnFileServer = listResponse.getFileNames();
-		if(!filesOnFileServer.equals(files.keySet()))
-		{
-			try
-			{
-				// FALL 1 mehr files am fileserver d
-				Set<String> additionalFilesToUpload = new HashSet<String>(filesOnFileServer);
-				additionalFilesToUpload.removeAll(files.keySet());
-				uploadNewFiles(additionalFilesToUpload, data);
-				// FALL 2 weniger files am fileserver d
-				Set<String> filesToDownload = new HashSet<String>(files.keySet());
-				filesToDownload.remove(filesOnFileServer);
-				downloadNewFiles(filesToDownload, data);
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-			}
-		}
-		return new MessageResponse("success");
-	}
-
-	public synchronized MessageResponse sendUploadRequestToServers(UploadRequest request, Set<NetworkId> networkIds)
-	{
-		if(networkIds.size() == 0)
+		if(fileServers.size() == 0)
 		{
 			return new MessageResponse("no fileserver available");
 		}
 
 		// Decorate UploadRequest with HMAC
 		HMACUploadRequest signedRequest;
-		try {
+		try
+		{
 			signedRequest = new HMACUploadRequest(request, hmacKeyPath);
-		} catch (HMACException e) {
+		}
+		catch(HMACException e)
+		{
 			return new MessageResponse("Generating HMAC failed");
 		}
 
-		for(NetworkId networkId : networkIds) {
-			boolean success = false;
-			MessageResponse m = null;
-			for (int i=0; i<5; i++) {
-				m = (MessageResponse) MyUtil.sendRequest(signedRequest, networkId, "error sending uploadRequest to " + networkId.getAddress() + ":" + networkId.getPort());
-				if (!m.getMessage().contains("failed")) {
-					success = true;
-					break;
-				}
-
-				System.out.println("Message integrity check failed (Fileserver "+networkId.toString()+")");
+		for(FileServerData data : fileServers)
+		{
+			try
+			{
+				MyUtil.sendRequest(signedRequest, data.getNetworkId());
 			}
-
-			if(!success || !m.getMessage().contains("success")) {
-				return new MessageResponse(networkId + ": " + m.getMessage());
+			catch(Exception e)
+			{
+				return new MessageResponse("error sending uploadRequest to " + data.getNetworkId().getAddress() + ":" + data.getNetworkId().getPort() + "\ncause: " + e.getMessage());
 			}
 		}
 		return new MessageResponse("success");
+	}
+
+	public void setHmacKeyPath(String hmacKeyPath)
+	{
+		this.hmacKeyPath = hmacKeyPath;
 	}
 
 	public synchronized void setOffline(NetworkId networkId)
@@ -310,20 +383,21 @@ public class ProxyInfo
 		if(data != null)
 		{
 			data.setOnline(false);
+			getReplicationInfo().initializeNumbers();
 		}
 	}
 
 	public synchronized void setOnline(NetworkId networkId)
 	{
 		FileServerData data = fileServerData.get(networkId);
-		boolean sendListRequest = false;
+		boolean wasOfflineBefore = false;
 
 		if(data != null)
 		{
 			if(!data.isOnline())
 			{
 				// when was offline
-				sendListRequest = true;
+				wasOfflineBefore = true;
 			}
 			data.setOnline(true);
 		}
@@ -332,44 +406,78 @@ public class ProxyInfo
 			data = new FileServerData(networkId);
 			data.setOnline(true);
 			fileServerData.put(data.getNetworkId(), data);
-			sendListRequest = true;
+			wasOfflineBefore = true;
 		}
-		if(sendListRequest)
+		if(wasOfflineBefore)
 		{
-			sendListRequest(data);
+			getReplicationInfo().initializeNumbers();
+			synchronizeFilesOnFileServer(data);
 		}
 	}
 
+	private synchronized Response synchronizeFilesOnFileServer(FileServerData data)
+	{
+		try
+		{
+			Response response = MyUtil.sendRequest(new ListRequest(), data.getNetworkId());
+			if(response instanceof MessageResponse)
+			{
+				throw new Exception(((MessageResponse)response).getMessage());
+			}
+
+			ListResponse listResponse = (ListResponse)response;
+			Set<String> filesOnFileServer = listResponse.getFileNames();
+
+			// CASE 1 upload files that not exist on any other fileserver
+			// no need to check versions because file versions on data always 0 at beginning
+			// when any version exists on another fileserver, version always >= 0
+			// upload only on read quorumServers
+			Set<String> filesToUpload = new HashSet<String>(filesOnFileServer);
+			filesToUpload.removeAll(files.keySet());
+			uploadFilesFromServer(filesToUpload, data, getReadQuorumServers());
+			// CASE 2 files to download on fileserver data
+			// fileserver only has to download files when in readQuorum
+			if(getReplicationInfo().isInReadQuorum(data))
+			{
+				Set<String> filesToDownload = new HashSet<String>(files.keySet());
+				filesToDownload.remove(filesOnFileServer);
+				downloadFilesToStartUpServer(filesToDownload, data);
+			}
+		}
+		catch(MessageResponseException e)
+		{
+			return new MessageResponse(e.getMessage());
+		}
+		catch(Exception e)
+		{
+			return new MessageResponse("error synchronizing files\ncause: " + e.getMessage());
+		}
+
+		return new MessageResponse("success");
+	}
+
 	/**
-	 * @param additionalFilesToUpload
-	 *            files to upload
-	 * @param data
+	 * @param filesToUpload
+	 * @param fromServer
 	 *            fileserver with new files to upload on other servers
 	 * @return
 	 * @throws Exception
 	 */
-	private synchronized void uploadNewFiles(Set<String> additionalFilesToUpload, FileServerData data) throws Exception
+	public synchronized void uploadFilesFromServer(Set<String> filesToUpload, FileServerData fromServer, List<FileServerData> toServers) throws Exception
 	{
-		for(String filename : additionalFilesToUpload)
+		for(String filename : filesToUpload)
 		{
 			// download from server with file
 			DownloadForReplicationRequest request = new DownloadForReplicationRequest(filename);
-			Response response = MyUtil.sendRequest(request, data.getNetworkId(), "download for replication failed");
-			if(response.getClass().equals(MessageResponse.class))
-			{
-				throw new Exception(((MessageResponse)response).getMessage());
-			}
+			Response response = MyUtil.sendRequest(request, fromServer.getNetworkId());
 			DownloadForReplicationResponse downloadResponse = (DownloadForReplicationResponse)response;
 
-			// TODO lab2 version not 0
-			int version = 0;
-			addFile(new FileInfo(downloadResponse.getFilename(), downloadResponse.getContent().length, version));
+			addFile(new FileInfo(downloadResponse.getFilename(), downloadResponse.getContent().length, downloadResponse.getVersion()));
 
 			// upload to all other servers
-			UploadRequest uploadRequest = new UploadRequest(downloadResponse.getFilename(), version, downloadResponse.getContent());
-			Set<NetworkId> fileServersIds = getOnlineFileServerIds();
-			fileServersIds.remove(data.getNetworkId()); // not sending to server which already have it
-			sendUploadRequestToServers(uploadRequest, fileServersIds);
+			UploadRequest uploadRequest = new UploadRequest(downloadResponse.getFilename(), downloadResponse.getVersion(), downloadResponse.getContent());
+			toServers.remove(fromServer); // not sending to server from which downloaded
+			sendUploadRequestToServers(uploadRequest, toServers);
 		}
 
 	}
