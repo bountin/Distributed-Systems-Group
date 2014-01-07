@@ -8,10 +8,16 @@
 	<property name="test.resources.dir" value="src/test/resources" />
 	<property name="build.dir" value="build" />
 	<property name="reports.dir" value="reports" />
+	<property name="files.dir1" value="files/fileserver1" />
+	<property name="files.dir2" value="files/fileserver2" />
+	<property name="files.dir3" value="files/fileserver3" />
+	<property name="files.dir4" value="files/fileserver4" />
+	<property name="files.dir5" value="files/fileserver5" />
+	<property name="files.dir" value="files/allfileserverfiles" />
 
 	<path id="project.classpath">
 		<pathelement location="${build.dir}" />
-		<pathelement location="lib/bcprov-jdk16-140.jar"/> 
+		<pathelement location="lib/bcprov-jdk16-140.jar" />
 		<pathelement location="lib/hamcrest-core-1.3.jar" />
 		<pathelement location="lib/junit-4.11.jar" />
 	</path>
@@ -61,6 +67,41 @@
 	<target name="clean" description="Clean build products.">
 		<delete dir="${build.dir}" />
 		<delete dir="${reports.dir}" />
+	</target>
+
+	<target name="reset">
+		<delete dir="${files.dir1}" />
+		<delete dir="${files.dir2}" />
+		<delete dir="${files.dir3}" />
+		<delete dir="${files.dir4}" />
+		<delete dir="${files.dir5}" />
+		<copy todir="${files.dir1}">
+			<fileset dir="${files.dir}">
+				<include name="fs1.txt" />
+				<include name="short.txt" />
+				<include name="long.txt" />
+			</fileset>
+		</copy>
+		<copy todir="${files.dir2}">
+			<fileset dir="${files.dir}">
+				<include name="fs2.txt" />
+			</fileset>
+		</copy>
+		<copy todir="${files.dir3}">
+			<fileset dir="${files.dir}">
+				<include name="fs3.txt" />
+			</fileset>
+		</copy>
+		<copy todir="${files.dir4}">
+			<fileset dir="${files.dir}">
+				<include name="fs4.txt" />
+			</fileset>
+		</copy>
+		<copy todir="${files.dir5}">
+			<fileset dir="${files.dir}">
+				<include name="fs5.txt" />
+			</fileset>
+		</copy>
 	</target>
 
 	<target name="rebuild" depends="clean, compile" description="Clean and build products." />
