@@ -21,6 +21,7 @@ import message.response.LoginResponse;
 import message.response.MessageResponse;
 import model.DownloadTicket;
 import model.IRmiData;
+import model.TopDownloads;
 import util.MyUtil;
 import auth.ClientAuthenticator;
 import cli.Command;
@@ -198,6 +199,23 @@ public abstract class ClientCommands extends ResponseUtil implements IClientCli,
 	{
 		try {
 			return new MessageResponse("Write-Quorum is set to "+rmiData.writeQuorum()+".");
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new MessageResponse("An error occurred: " +e.getMessage());
+		}
+	}
+
+	@Override
+	@Command
+	public MessageResponse topThreeDownloads() {
+		try {
+			TopDownloads downloads = rmiData.topDownloads(3);
+			StringBuilder sb = new StringBuilder();
+			sb.append("Top Three Downloads:\n");
+
+			sb.append((downloads.size() > 0 ? downloads.toString() : "No downloads at all."));
+
+			return new MessageResponse(sb.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new MessageResponse("An error occurred: " +e.getMessage());

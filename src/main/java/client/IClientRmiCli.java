@@ -9,4 +9,5 @@ public interface IClientRmiCli {
 
 	MessageResponse readQuorum();
 	MessageResponse writeQuorum();
+	MessageResponse topThreeDownloads();
 }
