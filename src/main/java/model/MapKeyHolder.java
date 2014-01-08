@@ -1,5 +1,6 @@
 package model;
 
+import java.io.IOException;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -40,6 +41,12 @@ public class MapKeyHolder implements KeyHolder
 		{
 			throw new Exception("public key not found");
 		}
+	}
+
+	// TODO implement me!
+	@Override
+	public void setPublicKey(String username, PublicKey key) throws IOException {
+		throw new IOException("IMPLEMENT ME!");
 	}
 
 }

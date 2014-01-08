@@ -64,6 +64,7 @@ public class Proxy extends ProxyCommands implements Runnable
 		{
 			ProxyInfo proxyInfo = ProxyInfo.getInstance();
 			proxyInfo.setHmacKeyPath(proxyConfig.getHmacKeyPath());
+			proxyInfo.setUserKeyHolder(proxyConfig.getUserPublicKeys());
 
 			proxySocket = new ServerSocket(proxyConfig.getTcpPort());
 

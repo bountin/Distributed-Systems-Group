@@ -23,6 +23,7 @@ import message.response.FileInfoListResponse;
 import message.response.ListResponse;
 import message.response.MessageResponse;
 import message.response.VersionResponse;
+import model.KeyHolder;
 import objects.User;
 import server.FileServerData;
 import server.NetworkId;
@@ -37,6 +38,7 @@ public class ProxyInfo
 
 	private static ProxyInfo instance;
 	private String hmacKeyPath;
+	private KeyHolder userKeyHolder;
 
 	public synchronized static ProxyInfo getInstance()
 	{
@@ -480,5 +482,13 @@ public class ProxyInfo
 			sendUploadRequestToServers(hmacUploadRequest, toServers);
 		}
 
+	}
+
+	public void setUserKeyHolder(KeyHolder userKeyHolder) {
+		this.userKeyHolder = userKeyHolder;
+	}
+
+	public KeyHolder getUserKeyHolder() {
+		return userKeyHolder;
 	}
 }
