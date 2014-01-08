@@ -2,7 +2,9 @@ package client;
 
 import java.io.File;
 import java.net.Socket;
+import java.rmi.Naming;
 
+import model.IRmiData;
 import util.ComponentFactory;
 import util.Config;
 import util.MyUtil;
@@ -17,15 +19,16 @@ public class Client extends ClientCommands implements Runnable
 
 	public static void main(String[] args) throws Exception
 	{
-		new ComponentFactory().startClient(new Config("client"), new Shell("client", System.out, System.in));
+		new ComponentFactory().startClient(new Config("client"), new Config("mc"), new Shell("client", System.out, System.in));
 	}
 
-	public Client(Config config, Shell shell)
+	public Client(Config config, Config mc, Shell shell)
 	{
 		this.shell = shell;
 		try
 		{
 			this.clientConfig = new ClientConfig(config);
+			this.manageConfig = new ManagementConfig(mc);
 		}
 		catch(UnvalidConfigException ue)
 		{
@@ -40,6 +43,8 @@ public class Client extends ClientCommands implements Runnable
 			MyUtil.writeToShell(shell, "proxy.tcp.port: the TCP port where the server is listening for client connections.");
 			MyUtil.writeToShell(shell, "keys.dir: directory where to look for the user's private key (named <username>.pem).");
 			MyUtil.writeToShell(shell, "proxy.key: file from where to read Proxy's public key.");
+
+			// TODO MC missing
 		}
 		Thread thread = new Thread(this);
 		thread.start();
@@ -59,6 +64,8 @@ public class Client extends ClientCommands implements Runnable
 			// in run method, otherwise getInputStream is blocking
 			proxySocket = new Socket(clientConfig.getProxyHost(), clientConfig.getProxyTcpPort());
 
+			rmiData = (IRmiData) Naming.lookup(manageConfig.getUrl());
+
 			shell.register(this);
 			shellThread = new ShellThread(shell);
 			shellThread.start();
@@ -69,6 +76,7 @@ public class Client extends ClientCommands implements Runnable
 			{
 				MyUtil.writeToShell(shell, "proxy not available");
 			}
+			e.printStackTrace();
 			shutdown();
 		}
 

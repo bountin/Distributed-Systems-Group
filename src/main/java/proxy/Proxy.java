@@ -6,6 +6,7 @@ import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
 
+import client.ManagementConfig;
 import util.ComponentFactory;
 import util.Config;
 import util.MyUtil;
@@ -26,7 +27,7 @@ public class Proxy extends ProxyCommands implements Runnable
 	{
 		try
 		{
-			new ComponentFactory().startProxy(new Config("proxy"), new Shell("proxy", System.out, System.in));
+			new ComponentFactory().startProxy(new Config("proxy"), new Config("mc"), new Shell("proxy", System.out, System.in));
 		}
 		catch(Exception e)
 		{
@@ -34,7 +35,7 @@ public class Proxy extends ProxyCommands implements Runnable
 		}
 	}
 
-	public Proxy(Config config, Shell shell, String password) throws UnvalidConfigException, IOException
+	public Proxy(Config config, Config manageConfig, Shell shell, String password) throws UnvalidConfigException, IOException
 	{
 		try
 		{
@@ -59,7 +60,8 @@ public class Proxy extends ProxyCommands implements Runnable
 		}
 		try
 		{
-			ProxyInfo.getInstance().setHmacKeyPath(proxyConfig.getHmacKeyPath());
+			ProxyInfo proxyInfo = ProxyInfo.getInstance();
+			proxyInfo.setHmacKeyPath(proxyConfig.getHmacKeyPath());
 
 			proxySocket = new ServerSocket(proxyConfig.getTcpPort());
 
@@ -74,6 +76,9 @@ public class Proxy extends ProxyCommands implements Runnable
 
 			isAliveHandler = new IsAliveHandler(datagramSocket, proxyConfig.getTimeout(), proxyConfig.getCheckPeriod());
 			isAliveHandler.start();
+
+			ManagementComponent managementComponent = new ManagementComponent(new ManagementConfig(manageConfig));
+			managementComponent.start(proxyInfo);
 		}
 		catch(IOException e)
 		{

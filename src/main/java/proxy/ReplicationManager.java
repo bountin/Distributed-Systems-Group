@@ -35,6 +35,14 @@ public class ReplicationManager
 		initializeNumbers();
 	}
 
+	public int getWriteQuorum() {
+		return numberWriteQuorum;
+	}
+
+	public int getReadQuorum() {
+		return numberReadQuorum;
+	}
+
 	/**
 	 * Seeks highest version of file with given filename and server with lowest usage which have this file version. Sets highestVersion and minUsageFileServer object.
 	 * 

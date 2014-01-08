@@ -16,17 +16,18 @@ public class ComponentFactory
 	/**
 	 * Creates and starts a new client instance using the provided {@link Config} and {@link Shell}.
 	 * 
+	 *
 	 * @param config
 	 *            the configuration containing parameters such as connection info
-	 * @param shell
-	 *            the {@code Shell} used for processing commands
-	 * @return the created component after starting it successfully
+	 * @param mc
+	 *@param shell
+	 *            the {@code Shell} used for processing commands  @return the created component after starting it successfully
 	 * @throws Exception
 	 *             if an exception occurs
 	 */
-	public IClientCli startClient(Config config, Shell shell) throws Exception
+	public IClientCli startClient(Config config, Config mc, Shell shell) throws Exception
 	{
-		return new Client(config, shell);
+		return new Client(config, mc, shell);
 	}
 
 	/**
@@ -48,16 +49,17 @@ public class ComponentFactory
 	/**
 	 * Creates and starts a new proxy instance using the provided {@link Config} and {@link Shell}.
 	 * 
+	 *
 	 * @param config
 	 *            the configuration containing parameters such as connection info
-	 * @param shell
-	 *            the {@code Shell} used for processing commands
-	 * @return the created component after starting it successfully
+	 * @param mc
+	 *@param shell
+	 *            the {@code Shell} used for processing commands  @return the created component after starting it successfully
 	 * @throws Exception
 	 *             if an exception occurs
 	 */
-	public IProxyCli startProxy(Config config, Shell shell) throws Exception
+	public IProxyCli startProxy(Config config, Config mc, Shell shell) throws Exception
 	{
-		return new Proxy(config, shell, "12345");
+		return new Proxy(config, mc, shell, "12345");
 	}
 }

@@ -20,14 +20,17 @@ import message.response.DownloadTicketResponse;
 import message.response.LoginResponse;
 import message.response.MessageResponse;
 import model.DownloadTicket;
+import model.IRmiData;
 import util.MyUtil;
 import auth.ClientAuthenticator;
 import cli.Command;
 
-public abstract class ClientCommands extends ResponseUtil implements IClientCli
+public abstract class ClientCommands extends ResponseUtil implements IClientCli, IClientRmiCli
 {
 	protected ClientConfig clientConfig;
+	protected ManagementConfig manageConfig;
 	protected Socket proxySocket;
+	protected IRmiData rmiData;
 
 	/* !buy <credits> */
 	@Override
@@ -175,5 +178,29 @@ public abstract class ClientCommands extends ResponseUtil implements IClientCli
 			return new MessageResponse("error reading file: " + e.getMessage());
 		}
 		return send(new UploadRequest(filename, 0, content));
+	}
+
+	@Override
+	@Command
+	public MessageResponse readQuorum()
+	{
+		try {
+			return new MessageResponse("Read-Quorum is set to "+rmiData.readQuorum()+".");
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new MessageResponse("An error occurred: " +e.getMessage());
+		}
+	}
+
+	@Override
+	@Command
+	public MessageResponse writeQuorum()
+	{
+		try {
+			return new MessageResponse("Write-Quorum is set to "+rmiData.writeQuorum()+".");
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new MessageResponse("An error occurred: " +e.getMessage());
+		}
 	}
 }
