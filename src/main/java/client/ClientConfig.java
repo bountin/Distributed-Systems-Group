@@ -1,10 +1,12 @@
 package client;
 
-import java.io.File;
+import java.io.*;
 import java.security.PublicKey;
 
+import org.bouncycastle.openssl.PEMWriter;
 import util.Config;
 import util.MyUtil;
+import util.UnvalidConfigException;
 
 public class ClientConfig
 {
@@ -13,6 +15,7 @@ public class ClientConfig
 	private Integer proxyTcpPort;
 	private File privateKeyDir;
 	private PublicKey publicProxyKey;
+	private File publicProxyKeyPath;
 
 	public ClientConfig(Config config) throws Exception
 	{
@@ -20,7 +23,11 @@ public class ClientConfig
 		proxyHost = MyUtil.getString(config, "proxy.host");
 		proxyTcpPort = MyUtil.getPort(config, "proxy.tcp.port");
 		privateKeyDir = MyUtil.getDirectory(config, "keys.dir");
-		publicProxyKey = MyUtil.getPublicKey(config, "proxy.key");
+
+		publicProxyKeyPath = new File(MyUtil.getString(config,"proxy.key"));
+		try {
+			publicProxyKey = MyUtil.getPublicKey(config, "proxy.key");
+		} catch (UnvalidConfigException ignored) {}
 	}
 
 	public File getDownloadDir()
@@ -45,7 +52,19 @@ public class ClientConfig
 
 	public PublicKey getPublicProxyKey()
 	{
-		return publicProxyKey;
+		synchronized (this) {
+			return publicProxyKey;
+		}
 	}
 
+	public void setPublicProxyKey(PublicKey publicProxyKey) throws IOException {
+		synchronized (this) {
+			this.publicProxyKey = publicProxyKey;
+			FileWriter fw = new FileWriter(this.publicProxyKeyPath);
+
+			PEMWriter writer = new PEMWriter(fw);
+			writer.writeObject(publicProxyKey);
+			writer.close();
+		}
+	}
 }

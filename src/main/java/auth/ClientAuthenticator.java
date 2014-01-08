@@ -22,6 +22,9 @@ public class ClientAuthenticator
 {
 	public static ObjectChannel authenticate(String username, ClientConfig clientConfig, Socket proxySocket, String password) throws Exception
 	{
+		if (clientConfig.getPublicProxyKey() == null) {
+			throw new Exception("Operations are limited to RMI since the proxy's public key is unavailable.");
+		}
 		Channel tcpChannel = new TCPChannel(proxySocket);
 		Channel base64Channel = new Base64Channel(tcpChannel);
 		Channel rsaChannel = new RSAChannel(base64Channel, clientConfig.getPublicProxyKey(), readUserPrivateKey(clientConfig, username, password));
