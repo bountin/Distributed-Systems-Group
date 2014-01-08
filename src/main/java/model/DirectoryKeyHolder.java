@@ -21,7 +21,7 @@ public class DirectoryKeyHolder implements KeyHolder
 	@Override
 	public PrivateKey getPrivateKey(String username, String password) throws Exception
 	{
-		File userPublicKeyFile = new File(directory, username + ".pub.pem");
+		File userPublicKeyFile = new File(directory, username + ".pem");
 		if(!userPublicKeyFile.exists())
 		{
 			throw new Exception("private user key does not exist");
