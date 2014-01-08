@@ -79,7 +79,7 @@ public class Proxy extends ProxyCommands implements Runnable
 			isAliveHandler.start();
 
 			managementComponent = new ManagementComponent(new ManagementConfig(manageConfig));
-			managementComponent.start(proxyInfo);
+			managementComponent.start(proxyInfo,proxyConfig);
 		}
 		catch(IOException e)
 		{

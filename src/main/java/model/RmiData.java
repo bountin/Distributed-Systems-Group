@@ -1,19 +1,23 @@
 package model;
 
 import proxy.FileInfo;
+import proxy.ProxyConfig;
 import proxy.ProxyInfo;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.security.PublicKey;
 import java.util.Map;
 
 public class RmiData  extends UnicastRemoteObject implements IRmiData{
 	private static final long serialVersionUID = -2673358994354617419L;
 	private final ProxyInfo proxyInfo;
+	private final ProxyConfig proxyConfig;
 
-	public RmiData(ProxyInfo proxyInfo) throws RemoteException {
+	public RmiData(ProxyInfo proxyInfo, ProxyConfig proxyConfig) throws RemoteException {
 		super(0);
 		this.proxyInfo = proxyInfo;
+		this.proxyConfig = proxyConfig;
 	}
 
 	public int readQuorum() throws RemoteException {
@@ -33,5 +37,9 @@ public class RmiData  extends UnicastRemoteObject implements IRmiData{
 		}
 
 		return ds.trimmedSet(count);
+	}
+
+	public PublicKey getProxyPublicKey() throws RemoteException {
+		return proxyConfig.getPublicKey();
 	}
 }

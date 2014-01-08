@@ -18,7 +18,7 @@ public class ManagementComponent{
 		this.manageConfig = manageConfig;
 	}
 
-	public void start(ProxyInfo proxyInfo) {
+	public void start(ProxyInfo proxyInfo, ProxyConfig proxyConfig) {
 		try {
 			LocateRegistry.createRegistry(manageConfig.getPort());
 		} catch (RemoteException e) {
@@ -26,7 +26,7 @@ public class ManagementComponent{
 		}
 
 		try {
-			rmiData = new RmiData(proxyInfo);
+			rmiData = new RmiData(proxyInfo, proxyConfig);
 			Naming.rebind(manageConfig.getUrl(), rmiData);
 		} catch (RemoteException e) {
 			e.printStackTrace();

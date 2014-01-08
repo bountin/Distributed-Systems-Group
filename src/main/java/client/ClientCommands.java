@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.net.Socket;
+import java.security.PublicKey;
 
 import message.Response;
 import message.ResponseUtil;
@@ -216,6 +217,19 @@ public abstract class ClientCommands extends ResponseUtil implements IClientCli,
 			sb.append((downloads.size() > 0 ? downloads.toString() : "No downloads at all."));
 
 			return new MessageResponse(sb.toString());
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new MessageResponse("An error occurred: " +e.getMessage());
+		}
+	}
+
+	@Override
+	@Command
+	public MessageResponse getProxyPublicKey() {
+		try {
+			PublicKey key = rmiData.getProxyPublicKey();
+			clientConfig.setPublicProxyKey(key);
+			return new MessageResponse("Successfully received public key of Proxy.");
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new MessageResponse("An error occurred: " +e.getMessage());
