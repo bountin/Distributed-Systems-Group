@@ -57,6 +57,10 @@ public class ProxyInfo
 		files.put(filenInfo.getFilename(), filenInfo);
 	}
 
+	public synchronized void increaseFileDownloadCounter(String filename) {
+		files.get(filename).increaseDownloadCounter();
+	}
+
 	public synchronized void decreaseCredits(User user, long filesize)
 	{
 		User u = users.get(user.getUsername());

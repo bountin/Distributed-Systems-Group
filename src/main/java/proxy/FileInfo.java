@@ -8,6 +8,7 @@ public class FileInfo implements Serializable
 	private String filename;
 	private long size;
 	private int version;
+	private int downloadCounter = 0;
 
 	public FileInfo(String filename, long size, int version)
 	{
@@ -46,10 +47,17 @@ public class FileInfo implements Serializable
 		this.version = version;
 	}
 
+	public int getDownloadCounter() {
+		return downloadCounter;
+	}
+
 	@Override
 	public String toString()
 	{
 		return version + " " + filename;
 	}
 
+	public void increaseDownloadCounter() {
+		downloadCounter++;
+	}
 }

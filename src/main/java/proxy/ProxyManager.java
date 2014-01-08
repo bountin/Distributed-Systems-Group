@@ -94,6 +94,7 @@ public class ProxyManager implements IProxy
 		DownloadTicket downloadTicket = new DownloadTicket(user.getUsername(), request.getFilename(), checkSum, minUsageFileServer.getNetworkId().getAddress(), minUsageFileServer.getNetworkId().getPort());
 		proxyInfo.decreaseCredits(user, filesize);
 		proxyInfo.increaseUsage(minUsageFileServer, filesize);
+		proxyInfo.increaseFileDownloadCounter(request.getFilename());
 		return new DownloadTicketResponse(downloadTicket);
 	}
 
