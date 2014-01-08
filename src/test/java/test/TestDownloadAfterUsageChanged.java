@@ -65,7 +65,7 @@ public class TestDownloadAfterUsageChanged
 	@Before
 	public void before() throws Exception
 	{
-		proxy = componentFactory.startProxy(new Config("proxy"), new Shell("proxy", new TestOutputStream(System.out), new TestInputStream()));
+		proxy = componentFactory.startProxy(new Config("proxy"), new Config("mc"), new Shell("proxy", new TestOutputStream(System.out), new TestInputStream()));
 		Thread.sleep(Util.WAIT_FOR_COMPONENT_STARTUP);
 
 		for(int i = 1; i <= 5; i++)
@@ -74,7 +74,7 @@ public class TestDownloadAfterUsageChanged
 			Thread.sleep(Util.WAIT_FOR_COMPONENT_STARTUP);
 		}
 
-		client = componentFactory.startClient(new Config("client"), new Shell("client", new TestOutputStream(System.out), new TestInputStream()));
+		client = componentFactory.startClient(new Config("client"), new Config("mc"), new Shell("client", new TestOutputStream(System.out), new TestInputStream()));
 		Thread.sleep(Util.WAIT_FOR_COMPONENT_STARTUP);
 	}
 
