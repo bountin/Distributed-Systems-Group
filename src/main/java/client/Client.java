@@ -22,6 +22,14 @@ public class Client extends ClientCommands implements Runnable
 		new ComponentFactory().startClient(new Config("client"), new Config("mc"), new Shell("client", System.out, System.in));
 	}
 
+	public Client(ClientConfig config, ManagementConfig managementConfig, Shell shell2)
+	{
+		this.clientConfig = config;
+		this.manageConfig = managementConfig;
+		Thread thread = new Thread(this);
+		thread.start();
+	}
+
 	public Client(Config config, Config mc, Shell shell)
 	{
 		this.shell = shell;
@@ -64,7 +72,7 @@ public class Client extends ClientCommands implements Runnable
 			// in run method, otherwise getInputStream is blocking
 			proxySocket = new Socket(clientConfig.getProxyHost(), clientConfig.getProxyTcpPort());
 
-			rmiData = (IRmiData) Naming.lookup(manageConfig.getUrl());
+			rmiData = (IRmiData)Naming.lookup(manageConfig.getUrl());
 
 			shell.register(this);
 			shellThread = new ShellThread(shell);

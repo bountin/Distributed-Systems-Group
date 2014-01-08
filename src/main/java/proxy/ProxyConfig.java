@@ -1,22 +1,23 @@
 package proxy;
 
-import java.io.File;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
+import model.DirectoryKeyHolder;
+import model.KeyHolder;
 import util.Config;
 import util.EncryptionUtil;
 import util.MyUtil;
 
 public class ProxyConfig
 {
-	private final PublicKey publicKey;
 	private Integer tcpPort;
 	private Integer udpPort;
 	private Long timeout;
 	private Long checkPeriod;
+	private final PublicKey publicKey;
 	private PrivateKey privateKey;
-	private File publicKeyDir;
+	private KeyHolder userPublicKeys;
 	private String hmacKeyPath;
 
 	public ProxyConfig(Config config, String password) throws Exception
@@ -26,12 +27,11 @@ public class ProxyConfig
 		this.timeout = MyUtil.getMilliseconds(config, "fileserver.timeout");
 		this.checkPeriod = MyUtil.getMilliseconds(config, "fileserver.checkPeriod");
 		this.privateKey = MyUtil.getPrivateKey(config, "key", password);
-		this.publicKeyDir = MyUtil.getDirectory(config, "keys.dir");
+		this.userPublicKeys = new DirectoryKeyHolder(MyUtil.getDirectory(config, "keys.dir"));
 		this.hmacKeyPath = MyUtil.getString(config, "hmac.key");
-
 		String privateKey = MyUtil.getString(config, "key");
 		String publicKeyPath = privateKey.replace(".pem", ".pub.pem");
-		this.publicKey = EncryptionUtil.getPublicKeyFromFile(MyUtil.getFile(publicKeyPath));
+		this.publicKey = EncryptionUtil.getPublicKeyFromFile(MyUtil.getFile(config, publicKeyPath));
 	}
 
 	public Long getCheckPeriod()
@@ -49,9 +49,9 @@ public class ProxyConfig
 		return privateKey;
 	}
 
-	public File getPublicKeyDir()
+	public PublicKey getPublicKey()
 	{
-		return publicKeyDir;
+		return publicKey;
 	}
 
 	public Integer getTcpPort()
@@ -69,7 +69,8 @@ public class ProxyConfig
 		return udpPort;
 	}
 
-	public PublicKey getPublicKey() {
-		return publicKey;
+	public KeyHolder getUserPublicKeys()
+	{
+		return userPublicKeys;
 	}
 }

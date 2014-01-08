@@ -6,13 +6,13 @@ import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
 
-import client.ManagementConfig;
 import util.ComponentFactory;
 import util.Config;
 import util.MyUtil;
 import util.UnvalidConfigException;
 import cli.Shell;
 import cli.ShellThread;
+import client.ManagementConfig;
 
 public class Proxy extends ProxyCommands implements Runnable
 {
@@ -79,7 +79,7 @@ public class Proxy extends ProxyCommands implements Runnable
 			isAliveHandler.start();
 
 			managementComponent = new ManagementComponent(new ManagementConfig(manageConfig));
-			managementComponent.start(proxyInfo,proxyConfig);
+			managementComponent.start(proxyInfo, proxyConfig);
 		}
 		catch(IOException e)
 		{
@@ -132,7 +132,10 @@ public class Proxy extends ProxyCommands implements Runnable
 		{
 			thread.shutdown();
 		}
-		managementComponent.stop();
+		if(managementComponent != null)
+		{
+			managementComponent.stop();
+		}
 		shellThread.stop();
 		isAliveHandler.shutdown();
 		if(proxySocket != null)

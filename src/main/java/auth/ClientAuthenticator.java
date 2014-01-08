@@ -1,14 +1,13 @@
 package auth;
 
-import java.io.File;
 import java.net.Socket;
 import java.security.PrivateKey;
 import java.util.Arrays;
 
-import auth.message.AuthClientChallenge;
-import auth.message.AuthSuccess;
-import auth.message.AuthProxyChallenge;
 import util.EncryptionUtil;
+import auth.message.AuthClientChallenge;
+import auth.message.AuthProxyChallenge;
+import auth.message.AuthSuccess;
 import channel.AESChannel;
 import channel.Base64Channel;
 import channel.Channel;
@@ -25,9 +24,11 @@ public class ClientAuthenticator
 		if (clientConfig.getPublicProxyKey() == null) {
 			throw new Exception("Operations are limited to RMI since the proxy's public key is unavailable.");
 		}
+		PrivateKey userPrivateKey = clientConfig.getPrivateKeyDir().getPrivateKey(username, password);
+
 		Channel tcpChannel = new TCPChannel(proxySocket);
 		Channel base64Channel = new Base64Channel(tcpChannel);
-		Channel rsaChannel = new RSAChannel(base64Channel, clientConfig.getPublicProxyKey(), readUserPrivateKey(clientConfig, username, password));
+		Channel rsaChannel = new RSAChannel(base64Channel, clientConfig.getPublicProxyKey(), userPrivateKey);
 		ObjectChannel objectRSAChannel = new ObjectByteArrayConverterChannel(rsaChannel);
 
 		// !login <username> <client-challenge>
@@ -50,15 +51,4 @@ public class ClientAuthenticator
 		return objectAESChannel;
 	}
 
-	private static PrivateKey readUserPrivateKey(ClientConfig clientConfig, String username, String password) throws Exception
-	{
-		File userPrivateKeyFile = new File(clientConfig.getPrivateKeyDir(), username + ".pem");
-		if(!userPrivateKeyFile.exists())
-		{
-			throw new AuthenticationException("user key file does not exist " + userPrivateKeyFile);
-		}
-		PrivateKey userPrivateKey = EncryptionUtil.getPrivateKeyFromFile(userPrivateKeyFile, password);
-
-		return userPrivateKey;
-	}
 }

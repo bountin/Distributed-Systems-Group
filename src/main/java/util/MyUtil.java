@@ -42,6 +42,30 @@ public final class MyUtil
 		return file;
 	}
 
+	public static float getFloat(Config config, String key) throws UnvalidConfigException
+	{
+		try
+		{
+			return new Float(MyUtil.getString(config, key));
+		}
+		catch(NumberFormatException nfe)
+		{
+			throw new UnvalidConfigException("value of " + key + " must be a valid decimal number!");
+		}
+	}
+
+	public static long getLong(Config config, String key) throws UnvalidConfigException
+	{
+		try
+		{
+			return new Long(MyUtil.getString(config, key));
+		}
+		catch(NumberFormatException nfe)
+		{
+			throw new UnvalidConfigException("value of " + key + " must be a valid number!");
+		}
+	}
+
 	public static long getMilliseconds(Config config, String key) throws UnvalidConfigException
 	{
 		try
@@ -173,28 +197,35 @@ public final class MyUtil
 
 	public static Response sendRequest(Request request, NetworkId networkId, String hmacKeypath) throws Exception
 	{
-		for (int i=0; i<5; i++) {
+		for(int i = 0; i < 5; i++)
+		{
 			Response response = sendRequest(request, networkId.getAddress(), networkId.getPort());
-			if (!(response instanceof HMACResponse)) {
+			if(!(response instanceof HMACResponse))
+			{
 				String s = "Expected a HMAC signed response, got " + response.toString();
 				System.out.println(s);
 				throw new Exception(s);
 			}
 
-			HMACResponse hmacResponse = (HMACResponse) response;
-			try {
-				if (!hmacResponse.verify(hmacKeypath)) {
-					System.out.println("Verification of a fileserver's HMAC Response signature failed: "+hmacResponse.toString());
+			HMACResponse hmacResponse = (HMACResponse)response;
+			try
+			{
+				if(!hmacResponse.verify(hmacKeypath))
+				{
+					System.out.println("Verification of a fileserver's HMAC Response signature failed: " + hmacResponse.toString());
 					continue;
 				}
 
-				if (hmacResponse.getResponse() instanceof MessageResponse && ((MessageResponse) hmacResponse.getResponse()).getMessage().contains(HMAC.VERIFICATION_ERROR_MESSAGE)) {
+				if(hmacResponse.getResponse() instanceof MessageResponse && ((MessageResponse)hmacResponse.getResponse()).getMessage().contains(HMAC.VERIFICATION_ERROR_MESSAGE))
+				{
 					System.out.println("A fileserver failed verifying our HMAC of " + request.toString());
 					continue;
 				}
 
 				return hmacResponse.getResponse();
-			} catch (HMACException e) {
+			}
+			catch(HMACException e)
+			{
 				System.out.println("Verifying HMAC failed: " + e.getMessage());
 				// continue;
 			}

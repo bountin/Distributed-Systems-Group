@@ -7,6 +7,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -64,6 +65,12 @@ public class EncryptionUtil
 		final byte[] number = new byte[bytes];
 		secureRandom.nextBytes(number);
 		return number;
+	}
+
+	public static KeyPair generateRSAKeyPair() throws NoSuchAlgorithmException
+	{
+		KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
+		return keyGen.generateKeyPair();
 	}
 
 	public static SecretKey generateSecretKey(int keySize) throws NoSuchAlgorithmException

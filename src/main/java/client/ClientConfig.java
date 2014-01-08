@@ -1,9 +1,15 @@
 package client;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.security.PublicKey;
 
+import model.DirectoryKeyHolder;
+import model.KeyHolder;
+
 import org.bouncycastle.openssl.PEMWriter;
+
 import util.Config;
 import util.MyUtil;
 import util.UnvalidConfigException;
@@ -13,7 +19,7 @@ public class ClientConfig
 	private File downloadDir;
 	private String proxyHost;
 	private Integer proxyTcpPort;
-	private File privateKeyDir;
+	private KeyHolder privateKeyDir;
 	private PublicKey publicProxyKey;
 	private File publicProxyKeyPath;
 
@@ -22,12 +28,23 @@ public class ClientConfig
 		downloadDir = MyUtil.getFile(config, "download.dir");
 		proxyHost = MyUtil.getString(config, "proxy.host");
 		proxyTcpPort = MyUtil.getPort(config, "proxy.tcp.port");
-		privateKeyDir = MyUtil.getDirectory(config, "keys.dir");
-
-		publicProxyKeyPath = new File(MyUtil.getString(config,"proxy.key"));
-		try {
+		privateKeyDir = new DirectoryKeyHolder(MyUtil.getDirectory(config, "keys.dir"));
+		publicProxyKeyPath = new File(MyUtil.getString(config, "proxy.key"));
+		try
+		{
 			publicProxyKey = MyUtil.getPublicKey(config, "proxy.key");
-		} catch (UnvalidConfigException ignored) {}
+		}
+		catch(UnvalidConfigException ignored)
+		{}
+	}
+
+	public ClientConfig(File downloadDir, String proxyHost, Integer proxyTcpPort, KeyHolder privateKeyDir, PublicKey publicProxyKey)
+	{
+		this.downloadDir = downloadDir;
+		this.proxyHost = proxyHost;
+		this.proxyTcpPort = proxyTcpPort;
+		this.privateKeyDir = privateKeyDir;
+		this.publicProxyKey = publicProxyKey;
 	}
 
 	public File getDownloadDir()
@@ -35,7 +52,7 @@ public class ClientConfig
 		return downloadDir;
 	}
 
-	public File getPrivateKeyDir()
+	public KeyHolder getPrivateKeyDir()
 	{
 		return privateKeyDir;
 	}
@@ -52,13 +69,21 @@ public class ClientConfig
 
 	public PublicKey getPublicProxyKey()
 	{
-		synchronized (this) {
+		synchronized(this)
+		{
 			return publicProxyKey;
 		}
 	}
 
-	public void setPublicProxyKey(PublicKey publicProxyKey) throws IOException {
-		synchronized (this) {
+	public void setPrivateKeyDir(KeyHolder privateKeyDir)
+	{
+		this.privateKeyDir = privateKeyDir;
+	}
+
+	public void setPublicProxyKey(PublicKey publicProxyKey) throws IOException
+	{
+		synchronized(this)
+		{
 			this.publicProxyKey = publicProxyKey;
 			FileWriter fw = new FileWriter(this.publicProxyKeyPath);
 
@@ -67,4 +92,5 @@ public class ClientConfig
 			writer.close();
 		}
 	}
+
 }

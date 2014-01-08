@@ -1,16 +1,15 @@
 package auth;
 
-import java.io.File;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
-import auth.message.AuthClientChallenge;
-import auth.message.AuthSuccess;
-import auth.message.AuthProxyChallenge;
 import proxy.ProxyConfig;
 import proxy.ProxyManager;
 import util.EncryptionUtil;
+import auth.message.AuthClientChallenge;
+import auth.message.AuthProxyChallenge;
+import auth.message.AuthSuccess;
 import channel.AESChannel;
 import channel.Base64Channel;
 import channel.Channel;
@@ -31,13 +30,7 @@ public class ProxyAuthenticator
 
 		// !login <username> <client-challenge>
 		AuthClientChallenge loginRequest = (AuthClientChallenge)objectRSAChannel.receiveObject();
-
-		File userPublicKeyFile = new File(proxyConfig.getPublicKeyDir(), loginRequest.getUsername() + ".pub.pem");
-		if(!userPublicKeyFile.exists())
-		{
-			throw new AuthenticationException("public user key does not exist");
-		}
-		rsaChannel.setPublicKey(EncryptionUtil.getPublicKeyFromFile(userPublicKeyFile));
+		rsaChannel.setPublicKey(proxyConfig.getUserPublicKeys().getPublicKey(loginRequest.getUsername()));
 
 		// !ok <client-challenge> <proxy-challenge> <secret-key> <iv-parameter>
 		AuthProxyChallenge loginAuthResponse = initializeLoginResponse(loginRequest);
