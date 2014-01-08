@@ -22,6 +22,7 @@ public class Proxy extends ProxyCommands implements Runnable
 	private boolean closed;
 	private IsAliveHandler isAliveHandler;
 	private ProxyConfig proxyConfig;
+	private ManagementComponent managementComponent;
 
 	public static void main(String[] args)
 	{
@@ -77,7 +78,7 @@ public class Proxy extends ProxyCommands implements Runnable
 			isAliveHandler = new IsAliveHandler(datagramSocket, proxyConfig.getTimeout(), proxyConfig.getCheckPeriod());
 			isAliveHandler.start();
 
-			ManagementComponent managementComponent = new ManagementComponent(new ManagementConfig(manageConfig));
+			managementComponent = new ManagementComponent(new ManagementConfig(manageConfig));
 			managementComponent.start(proxyInfo);
 		}
 		catch(IOException e)
@@ -131,6 +132,7 @@ public class Proxy extends ProxyCommands implements Runnable
 		{
 			thread.shutdown();
 		}
+		managementComponent.stop();
 		shellThread.stop();
 		isAliveHandler.shutdown();
 		if(proxySocket != null)
