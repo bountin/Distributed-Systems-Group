@@ -1,5 +1,6 @@
 package proxy;
 
+import java.io.File;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 
@@ -31,7 +32,7 @@ public class ProxyConfig
 		this.hmacKeyPath = MyUtil.getString(config, "hmac.key");
 		String privateKey = MyUtil.getString(config, "key");
 		String publicKeyPath = privateKey.replace(".pem", ".pub.pem");
-		this.publicKey = EncryptionUtil.getPublicKeyFromFile(MyUtil.getFile(config, publicKeyPath));
+		this.publicKey = EncryptionUtil.getPublicKeyFromFile(new File(publicKeyPath));
 	}
 
 	public Long getCheckPeriod()

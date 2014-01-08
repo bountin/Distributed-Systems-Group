@@ -49,6 +49,7 @@ public class Proxy extends ProxyCommands implements Runnable
 		}
 		catch(Exception e)
 		{
+			shell.writeLine(e.getMessage());
 			shell.writeLine("only parameters allowed:");
 			shell.writeLine("tcp.port: the port to be used for instantiating a java.net.ServerSocket (handling TCP connection requests from clients).");
 			shell.writeLine("udp.port: the port to be used for instantiating a java.net.DatagramSocket (handling UDP requests from fileservers).");
