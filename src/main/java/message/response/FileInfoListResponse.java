@@ -48,7 +48,7 @@ public class FileInfoListResponse implements Response
 		StringBuilder sb = new StringBuilder();
 		for(FileInfo fileInfo : getFileInfos())
 		{
-			sb.append(fileInfo.getFilename()).append("\n");
+			sb.append(fileInfo.toString()).append("\n");
 		}
 		return sb.toString();
 	}

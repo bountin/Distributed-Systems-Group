@@ -8,6 +8,7 @@ import message.MessageResponseException;
 import message.Response;
 import message.request.BuyRequest;
 import message.request.DownloadTicketRequest;
+import message.request.HMACRequest;
 import message.request.UploadRequest;
 import message.response.BuyResponse;
 import message.response.CreditsResponse;
@@ -139,10 +140,12 @@ public class ProxyManager implements IProxy
 
 		// get version from read quorum servers and update request
 		int version;
+		HMACRequest<UploadRequest> hmacRequest=null;
 		try
 		{
 			version = proxyInfo.getNextFileVersion(request.getFilename());
 			request = new UploadRequest(request.getFilename(), version, request.getContent());
+			hmacRequest = new HMACRequest<UploadRequest>(request, proxyInfo.getHmacKeyPath());
 		}
 		catch(Exception e)
 		{
@@ -151,7 +154,7 @@ public class ProxyManager implements IProxy
 
 		// send to write quorum servers
 		List<FileServerData> fileServersToWrite = proxyInfo.getWriteQuorumServers();
-		MessageResponse response = proxyInfo.sendUploadRequestToServers(request, fileServersToWrite);
+		MessageResponse response = proxyInfo.sendUploadRequestToServers(hmacRequest, fileServersToWrite);
 		if(!response.getMessage().equals("success"))
 		{
 			return response;

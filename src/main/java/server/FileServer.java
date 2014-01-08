@@ -8,9 +8,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 
+import message.Response;
 import util.Config;
 import util.MyUtil;
 import util.UnvalidConfigException;
+import cli.Command;
 import cli.Shell;
 import cli.ShellThread;
 import cli.TestOutputStream;
@@ -98,6 +100,12 @@ public class FileServer extends FileServerCommands implements Runnable
 		shell.register(this);
 		shellThread = new ShellThread(shell);
 		shellThread.start();
+	}
+
+	@Command
+	public Response list()
+	{
+		return fileServerManager.fileInfoList();
 	}
 
 	@Override

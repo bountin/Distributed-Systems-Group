@@ -3,7 +3,6 @@ package server;
 import message.response.MessageResponse;
 import cli.Command;
 
-
 public abstract class FileServerCommands implements IFileServerCli
 {
 

@@ -46,4 +46,10 @@ public class FileInfo implements Serializable
 		this.version = version;
 	}
 
+	@Override
+	public String toString()
+	{
+		return version + " " + filename;
+	}
+
 }

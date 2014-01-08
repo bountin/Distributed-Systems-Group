@@ -12,7 +12,12 @@ import java.util.Set;
 
 import message.MessageResponseException;
 import message.Response;
-import message.request.*;
+import message.request.DownloadForReplicationRequest;
+import message.request.FileInfoListRequest;
+import message.request.HMACRequest;
+import message.request.ListRequest;
+import message.request.UploadRequest;
+import message.request.VersionRequest;
 import message.response.DownloadForReplicationResponse;
 import message.response.FileInfoListResponse;
 import message.response.ListResponse;
@@ -21,7 +26,6 @@ import message.response.VersionResponse;
 import objects.User;
 import server.FileServerData;
 import server.NetworkId;
-import util.HMACException;
 import util.MyUtil;
 
 public class ProxyInfo
@@ -79,11 +83,11 @@ public class ProxyInfo
 		for(String filename : filesToDownload)
 		{
 			// download from server with lowest usage
-			DownloadForReplicationRequest request = new DownloadForReplicationRequest(filename);
+			HMACRequest<DownloadForReplicationRequest> request = new HMACRequest<DownloadForReplicationRequest>(new DownloadForReplicationRequest(filename), hmacKeyPath);
 			// minUsageFileServer with newest version of file
 			FileServerData minUsageFileServer = replicationInfo.getLowestReadQuorumWithHighestVersion(filename).getFileServerData();
 
-			Response response = MyUtil.sendRequest(new HMACDownloadForReplicationRequest(request,hmacKeyPath), minUsageFileServer.getNetworkId());
+			Response response = MyUtil.sendRequest(request, minUsageFileServer.getNetworkId());
 			if(response instanceof MessageResponse)
 			{
 				throw new Exception("error downloading file for replication\nfile: " + filename + "\nfileserver: " + data + "\ncause: " + ((MessageResponse)response).getMessage());
@@ -92,9 +96,10 @@ public class ProxyInfo
 
 			// upload to server without file
 			UploadRequest uploadRequest = new UploadRequest(downloadResponse.getFilename(), downloadResponse.getVersion(), downloadResponse.getContent());
+			HMACRequest<UploadRequest> hmacUploadRequest = new HMACRequest<UploadRequest>(uploadRequest, hmacKeyPath);
 			List<FileServerData> fileServerData = getWriteQuorumServers();
 			// fileServerData.add(data);
-			sendUploadRequestToServers(uploadRequest, fileServerData);
+			sendUploadRequestToServers(hmacUploadRequest, fileServerData);
 		}
 
 	}
@@ -164,6 +169,11 @@ public class ProxyInfo
 		}
 	}
 
+	public String getHmacKeyPath()
+	{
+		return hmacKeyPath;
+	}
+
 	public Map<String, FileInfo> getMergedListRequest(List<FileServerData> newReadQuorumServers)
 	{
 		Map<String, FileInfo> mergedFileInfos = new HashMap<String, FileInfo>();
@@ -171,7 +181,8 @@ public class ProxyInfo
 		{
 			try
 			{
-				Response response = MyUtil.sendRequest(new FileInfoListRequest(), fileServerData.getNetworkId());
+				HMACRequest<FileInfoListRequest> request = new HMACRequest<FileInfoListRequest>(new FileInfoListRequest(), hmacKeyPath);
+				Response response = MyUtil.sendRequest(request, fileServerData.getNetworkId());
 
 				if(response instanceof MessageResponse)
 				{
@@ -201,7 +212,7 @@ public class ProxyInfo
 		int version = -1;
 		for(FileServerData fileServerData : fileServers)
 		{
-			VersionRequest versionRequest = new VersionRequest(filename);
+			HMACRequest<VersionRequest> versionRequest = new HMACRequest<VersionRequest>(new VersionRequest(filename), hmacKeyPath);
 			Response response = MyUtil.sendRequest(versionRequest, fileServerData.getNetworkId());
 			if(response instanceof MessageResponse)
 			{
@@ -335,29 +346,18 @@ public class ProxyInfo
 		}
 	}
 
-	public synchronized MessageResponse sendUploadRequestToServers(UploadRequest request, List<FileServerData> fileServers)
+	public synchronized MessageResponse sendUploadRequestToServers(HMACRequest<UploadRequest> request, List<FileServerData> fileServers)
 	{
 		if(fileServers.size() == 0)
 		{
 			return new MessageResponse("no fileserver available");
 		}
 
-		// Decorate UploadRequest with HMAC
-		HMACUploadRequest signedRequest;
-		try
-		{
-			signedRequest = new HMACUploadRequest(request, hmacKeyPath);
-		}
-		catch(HMACException e)
-		{
-			return new MessageResponse("Generating HMAC failed");
-		}
-
 		for(FileServerData data : fileServers)
 		{
 			try
 			{
-				MyUtil.sendRequest(signedRequest, data.getNetworkId());
+				MyUtil.sendRequest(request, data.getNetworkId());
 			}
 			catch(Exception e)
 			{
@@ -414,7 +414,7 @@ public class ProxyInfo
 	{
 		try
 		{
-			Response response = MyUtil.sendRequest(new HMACListRequest(new ListRequest(), hmacKeyPath), data.getNetworkId());
+			Response response = MyUtil.sendRequest(new HMACRequest<ListRequest>(new ListRequest(), hmacKeyPath), data.getNetworkId());
 			if(response instanceof MessageResponse)
 			{
 				throw new Exception(((MessageResponse)response).getMessage());
@@ -463,16 +463,17 @@ public class ProxyInfo
 		for(String filename : filesToUpload)
 		{
 			// download from server with file
-			DownloadForReplicationRequest request = new DownloadForReplicationRequest(filename);
-			Response response = MyUtil.sendRequest(new HMACDownloadForReplicationRequest(request,hmacKeyPath), fromServer.getNetworkId());
+			HMACRequest<DownloadForReplicationRequest> request = new HMACRequest<DownloadForReplicationRequest>(new DownloadForReplicationRequest(filename), hmacKeyPath);
+			Response response = MyUtil.sendRequest(request, fromServer.getNetworkId());
 			DownloadForReplicationResponse downloadResponse = (DownloadForReplicationResponse)response;
 
 			addFile(new FileInfo(downloadResponse.getFilename(), downloadResponse.getContent().length, downloadResponse.getVersion()));
 
 			// upload to all other servers
 			UploadRequest uploadRequest = new UploadRequest(downloadResponse.getFilename(), downloadResponse.getVersion(), downloadResponse.getContent());
+			HMACRequest<UploadRequest> hmacUploadRequest = new HMACRequest<UploadRequest>(uploadRequest, hmacKeyPath);
 			toServers.remove(fromServer); // not sending to server from which downloaded
-			sendUploadRequestToServers(uploadRequest, toServers);
+			sendUploadRequestToServers(hmacUploadRequest, toServers);
 		}
 
 	}

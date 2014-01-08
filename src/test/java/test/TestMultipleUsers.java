@@ -18,7 +18,7 @@ import cli.TestInputStream;
 import cli.TestOutputStream;
 import client.IClientCli;
 
-public class SimpleTest_03
+public class TestMultipleUsers
 {
 	static ComponentFactory componentFactory = new ComponentFactory();
 	IProxyCli proxy;
@@ -88,7 +88,7 @@ public class SimpleTest_03
 	@Test
 	public void test() throws Exception
 	{
-		String actual = client.login("alice", "12345").toString();
+		String actual = client1.login("alice", "12345").toString();
 		String expected = "success";
 		assertTrue(String.format("Response must contain '%s' but was '%s'", expected, actual), actual.contains(expected));
 

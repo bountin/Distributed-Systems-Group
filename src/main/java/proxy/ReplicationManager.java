@@ -10,11 +10,13 @@ import java.util.Set;
 import message.MessageResponseException;
 import message.Response;
 import message.request.FileInfoListRequest;
+import message.request.HMACRequest;
 import message.request.VersionRequest;
 import message.response.FileInfoListResponse;
 import message.response.MessageResponse;
 import message.response.VersionResponse;
 import server.FileServerData;
+import util.HMACException;
 import util.MyUtil;
 
 public class ReplicationManager
@@ -59,7 +61,16 @@ public class ReplicationManager
 
 		for(FileServerData fileServerData : readQuorumFileServers)
 		{
-			VersionRequest versionRequest = new VersionRequest(filename);
+			HMACRequest<VersionRequest> versionRequest = null;
+			try
+			{
+				versionRequest = new HMACRequest<VersionRequest>(new VersionRequest(filename), proxyInfo.getHmacKeyPath());
+			}
+			catch(HMACException e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			VersionResponse versionResponse = null;
 			try
 			{
@@ -159,7 +170,8 @@ public class ReplicationManager
 
 	private synchronized Response synchronizeFilesOnFileServer(FileServerData data, List<FileServerData> oldReadQuorumServers, List<FileServerData> newReadQuorumServers) throws Exception
 	{
-		FileInfoListResponse fileInfoListResponse = (FileInfoListResponse)MyUtil.sendRequest(new FileInfoListRequest(), data.getNetworkId());
+		HMACRequest<FileInfoListRequest> request = new HMACRequest<FileInfoListRequest>(new FileInfoListRequest(), proxyInfo.getHmacKeyPath());
+		FileInfoListResponse fileInfoListResponse = (FileInfoListResponse)MyUtil.sendRequest(request, data.getNetworkId());
 		List<FileInfo> filesOnFileServer = fileInfoListResponse.getFileInfos();
 		Set<String> filesToUpload = new HashSet<String>();
 		Map<String, FileInfo> filesAlreadyOnOtherServers = proxyInfo.getMergedListRequest(newReadQuorumServers);
