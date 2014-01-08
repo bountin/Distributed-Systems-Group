@@ -11,12 +11,12 @@ import java.rmi.server.UnicastRemoteObject;
 import java.security.PublicKey;
 import java.util.Map;
 
-public class RmiData  extends UnicastRemoteObject implements IRmiData{
+public class RmiServerData extends UnicastRemoteObject implements IRmiData{
 	private static final long serialVersionUID = -2673358994354617419L;
 	private final ProxyInfo proxyInfo;
 	private final ProxyConfig proxyConfig;
 
-	public RmiData(ProxyInfo proxyInfo, ProxyConfig proxyConfig) throws RemoteException {
+	public RmiServerData(ProxyInfo proxyInfo, ProxyConfig proxyConfig) throws RemoteException {
 		super(0);
 		this.proxyInfo = proxyInfo;
 		this.proxyConfig = proxyConfig;

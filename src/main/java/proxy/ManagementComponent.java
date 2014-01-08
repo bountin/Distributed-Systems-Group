@@ -1,7 +1,7 @@
 package proxy;
 
 import client.ManagementConfig;
-import model.RmiData;
+import model.RmiServerData;
 
 import java.net.MalformedURLException;
 import java.rmi.Naming;
@@ -11,7 +11,7 @@ import java.rmi.server.UnicastRemoteObject;
 
 public class ManagementComponent{
 	private final ManagementConfig manageConfig;
-	private RmiData rmiData;
+	private RmiServerData rmiServerData;
 
 	public ManagementComponent(ManagementConfig manageConfig) {
 
@@ -26,8 +26,8 @@ public class ManagementComponent{
 		}
 
 		try {
-			rmiData = new RmiData(proxyInfo, proxyConfig);
-			Naming.rebind(manageConfig.getUrl(), rmiData);
+			rmiServerData = new RmiServerData(proxyInfo, proxyConfig);
+			Naming.rebind(manageConfig.getUrl(), rmiServerData);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
@@ -38,7 +38,7 @@ public class ManagementComponent{
 
 	public void stop() {
 		try {
-			UnicastRemoteObject.unexportObject(rmiData, true);
+			UnicastRemoteObject.unexportObject(rmiServerData, true);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
