@@ -2,12 +2,15 @@ package proxy;
 
 import java.io.File;
 import java.security.PrivateKey;
+import java.security.PublicKey;
 
 import util.Config;
+import util.EncryptionUtil;
 import util.MyUtil;
 
 public class ProxyConfig
 {
+	private final PublicKey publicKey;
 	private Integer tcpPort;
 	private Integer udpPort;
 	private Long timeout;
@@ -25,6 +28,10 @@ public class ProxyConfig
 		this.privateKey = MyUtil.getPrivateKey(config, "key", password);
 		this.publicKeyDir = MyUtil.getDirectory(config, "keys.dir");
 		this.hmacKeyPath = MyUtil.getString(config, "hmac.key");
+
+		String privateKey = MyUtil.getString(config, "key");
+		String publicKeyPath = privateKey.replace(".pem", ".pub.pem");
+		this.publicKey = EncryptionUtil.getPublicKeyFromFile(MyUtil.getFile(publicKeyPath));
 	}
 
 	public Long getCheckPeriod()
@@ -60,5 +67,9 @@ public class ProxyConfig
 	public Integer getUdpPort()
 	{
 		return udpPort;
+	}
+
+	public PublicKey getPublicKey() {
+		return publicKey;
 	}
 }
