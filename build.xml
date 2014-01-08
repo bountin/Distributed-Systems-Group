@@ -31,6 +31,7 @@
 			</fileset>
 			<fileset dir="${test.resources.dir}">
 				<include name="*.txt" />
+				<include name="*.properties" />
 			</fileset>
 		</copy>
 	</target>
@@ -62,6 +63,10 @@
 
 	<target name="run-client" depends="compile" description="Run client.">
 		<java classname="client.Client" fork="true" classpathref="project.classpath" />
+	</target>
+
+	<target name="loadtest" depends="compile" description="Loadtest">
+		<java classname="test.loadtest.Loadtest" fork="true" classpathref="project.classpath" />
 	</target>
 
 	<target name="clean" description="Clean build products.">
