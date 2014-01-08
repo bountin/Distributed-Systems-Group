@@ -20,9 +20,7 @@ import message.response.DownloadFileResponse;
 import message.response.DownloadTicketResponse;
 import message.response.LoginResponse;
 import message.response.MessageResponse;
-import model.DownloadTicket;
-import model.IRmiServerData;
-import model.TopDownloads;
+import model.*;
 import util.MyUtil;
 import auth.ClientAuthenticator;
 import cli.Command;
@@ -33,6 +31,7 @@ public abstract class ClientCommands extends ResponseUtil implements IClientCli,
 	protected ManagementConfig manageConfig;
 	protected Socket proxySocket;
 	protected IRmiServerData rmiData;
+	protected String user;
 
 	/* !buy <credits> */
 	@Override
@@ -139,6 +138,7 @@ public abstract class ClientCommands extends ResponseUtil implements IClientCli,
 			e.printStackTrace();
 			return new LoginResponse(LoginResponse.Type.WRONG_CREDENTIALS);
 		}
+		user = username;
 		return new LoginResponse(LoginResponse.Type.SUCCESS);
 	}
 
@@ -153,6 +153,7 @@ public abstract class ClientCommands extends ResponseUtil implements IClientCli,
 		finally
 		{
 			aesChannel = null;
+			user = null;
 		}
 	}
 
@@ -251,4 +252,19 @@ public abstract class ClientCommands extends ResponseUtil implements IClientCli,
 			e.printStackTrace();
 			return new MessageResponse("An error occurred: " +e.getMessage());
 		}	}
+
+	@Override
+	@Command
+	public MessageResponse subscribe(String filename, int count) {
+		if (user == null) {
+			return new MessageResponse("Please log in to subscribe");
+		}
+		try {
+			rmiData.subscribe(new RmiClientData(user, filename, count));
+			return new MessageResponse("Successfully subscribed for file " + filename);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new MessageResponse("An error occurred: " +e.getMessage());
+		}
+	}
 }

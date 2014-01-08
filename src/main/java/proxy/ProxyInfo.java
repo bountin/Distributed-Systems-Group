@@ -1,6 +1,7 @@
 package proxy;
 
 import java.io.FileNotFoundException;
+import java.rmi.RemoteException;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -23,6 +24,7 @@ import message.response.FileInfoListResponse;
 import message.response.ListResponse;
 import message.response.MessageResponse;
 import message.response.VersionResponse;
+import model.IRmiClientData;
 import model.KeyHolder;
 import objects.User;
 import server.FileServerData;
@@ -34,6 +36,7 @@ public class ProxyInfo
 	private Map<String, User> users = Collections.synchronizedMap(new HashMap<String, User>());
 	private Map<NetworkId, FileServerData> fileServerData = Collections.synchronizedMap(new HashMap<NetworkId, FileServerData>());
 	private Map<String, FileInfo> files = Collections.synchronizedMap(new HashMap<String, FileInfo>());
+	private Set<IRmiClientData> downloadSubscriptions = Collections.synchronizedSet(new HashSet<IRmiClientData>());
 	private ReplicationManager replicationInfo;
 
 	private static ProxyInfo instance;
@@ -59,8 +62,50 @@ public class ProxyInfo
 		files.put(filenInfo.getFilename(), filenInfo);
 	}
 
+	public synchronized void addSubscription(IRmiClientData data) {
+		downloadSubscriptions.add(data);
+	}
+
+	public void pruneSubscriptions(User user) {
+		Set<IRmiClientData> toRemove = new HashSet<IRmiClientData>();
+
+		for(IRmiClientData subscription: downloadSubscriptions) {
+			try {
+				if (subscription.getUser().equals(user.getUsername())) {
+					toRemove.add(subscription);
+				}
+			} catch (RemoteException e) {
+				toRemove.add(subscription);
+			}
+		}
+
+		for (IRmiClientData subscription: toRemove) {
+			downloadSubscriptions.remove(subscription);
+		}
+	}
+
 	public synchronized void increaseFileDownloadCounter(String filename) {
 		files.get(filename).increaseDownloadCounter();
+		int count = files.get(filename).getDownloadCounter();
+
+		System.out.println("subscribtion count:" + downloadSubscriptions.size());
+
+		Set<IRmiClientData> toRemove = new HashSet<IRmiClientData>();
+
+		for(IRmiClientData subscription: downloadSubscriptions) {
+			try {
+				if (subscription.test(filename, count)) {
+					subscription.notifyDownloadSubscription();
+					toRemove.add(subscription);
+				}
+			} catch (RemoteException e) {
+				toRemove.add(subscription);
+			}
+		}
+
+		for (IRmiClientData subscription: toRemove) {
+			downloadSubscriptions.remove(subscription);
+		}
 	}
 
 	public synchronized void decreaseCredits(User user, long filesize)

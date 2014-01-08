@@ -127,6 +127,7 @@ public class ProxyManager implements IProxy
 			return new MessageResponse("login required");
 		}
 		this.user.setOnline(false);
+		proxyInfo.pruneSubscriptions(this.user);
 		this.user = null;
 		return new MessageResponse("Successfully logged out.");
 	}

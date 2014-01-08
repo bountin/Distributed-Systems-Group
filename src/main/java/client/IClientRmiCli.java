@@ -12,4 +12,5 @@ public interface IClientRmiCli {
 	MessageResponse topThreeDownloads();
 	MessageResponse getProxyPublicKey();
 	MessageResponse setUserPublicKey(String username);
+	MessageResponse subscribe(String filename, int count);
 }

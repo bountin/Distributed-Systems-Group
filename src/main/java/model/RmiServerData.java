@@ -59,4 +59,8 @@ public class RmiServerData extends UnicastRemoteObject implements IRmiServerData
 
 		return null;
 	}
+
+	public void subscribe(IRmiClientData data) throws RemoteException {
+		proxyInfo.addSubscription(data);
+	}
 }
