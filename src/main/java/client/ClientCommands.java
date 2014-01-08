@@ -235,4 +235,20 @@ public abstract class ClientCommands extends ResponseUtil implements IClientCli,
 			return new MessageResponse("An error occurred: " +e.getMessage());
 		}
 	}
+
+	@Override
+	@Command
+	public MessageResponse setUserPublicKey(String username) {
+		try {
+			PublicKey key = clientConfig.getPrivateKeyDir().getPublicKey(username);
+			String message = rmiData.setUserKey(username,key);
+			if (message != null) {
+				throw new Exception(message);
+			}
+
+			return new MessageResponse("Successfully transmitted public key of user "+username);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return new MessageResponse("An error occurred: " +e.getMessage());
+		}	}
 }

@@ -1,9 +1,11 @@
 package model;
 
+import objects.User;
 import proxy.FileInfo;
 import proxy.ProxyConfig;
 import proxy.ProxyInfo;
 
+import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.security.PublicKey;
@@ -41,5 +43,20 @@ public class RmiData  extends UnicastRemoteObject implements IRmiData{
 
 	public PublicKey getProxyPublicKey() throws RemoteException {
 		return proxyConfig.getPublicKey();
+	}
+
+	public String setUserKey(String username, PublicKey key) throws RemoteException {
+		User user = proxyInfo.getUsers().get(username);
+		if (user == null) {
+			return "User not found";
+		}
+
+		try {
+			proxyInfo.getUserKeyHolder().setPublicKey(username, key);
+		} catch (IOException e) {
+			return "Writing key failed: " + e.getMessage();
+		}
+
+		return null;
 	}
 }

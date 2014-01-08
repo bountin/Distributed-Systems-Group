@@ -11,4 +11,5 @@ public interface IClientRmiCli {
 	MessageResponse writeQuorum();
 	MessageResponse topThreeDownloads();
 	MessageResponse getProxyPublicKey();
+	MessageResponse setUserPublicKey(String username);
 }

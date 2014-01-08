@@ -9,4 +9,5 @@ public interface IRmiData extends Remote {
 	int writeQuorum() throws RemoteException;
 	TopDownloads topDownloads(int count) throws RemoteException;
 	PublicKey getProxyPublicKey() throws RemoteException;
+	String setUserKey(String username, PublicKey key) throws RemoteException;
 }
