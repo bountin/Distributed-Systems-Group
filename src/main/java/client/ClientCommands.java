@@ -21,7 +21,7 @@ import message.response.DownloadTicketResponse;
 import message.response.LoginResponse;
 import message.response.MessageResponse;
 import model.DownloadTicket;
-import model.IRmiData;
+import model.IRmiServerData;
 import model.TopDownloads;
 import util.MyUtil;
 import auth.ClientAuthenticator;
@@ -32,7 +32,7 @@ public abstract class ClientCommands extends ResponseUtil implements IClientCli,
 	protected ClientConfig clientConfig;
 	protected ManagementConfig manageConfig;
 	protected Socket proxySocket;
-	protected IRmiData rmiData;
+	protected IRmiServerData rmiData;
 
 	/* !buy <credits> */
 	@Override

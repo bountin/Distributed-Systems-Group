@@ -4,7 +4,7 @@ import java.io.File;
 import java.net.Socket;
 import java.rmi.Naming;
 
-import model.IRmiData;
+import model.IRmiServerData;
 import util.ComponentFactory;
 import util.Config;
 import util.MyUtil;
@@ -72,7 +72,7 @@ public class Client extends ClientCommands implements Runnable
 			// in run method, otherwise getInputStream is blocking
 			proxySocket = new Socket(clientConfig.getProxyHost(), clientConfig.getProxyTcpPort());
 
-			rmiData = (IRmiData)Naming.lookup(manageConfig.getUrl());
+			rmiData = (IRmiServerData)Naming.lookup(manageConfig.getUrl());
 
 			shell.register(this);
 			shellThread = new ShellThread(shell);

@@ -11,7 +11,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.security.PublicKey;
 import java.util.Map;
 
-public class RmiServerData extends UnicastRemoteObject implements IRmiData{
+public class RmiServerData extends UnicastRemoteObject implements IRmiServerData {
 	private static final long serialVersionUID = -2673358994354617419L;
 	private final ProxyInfo proxyInfo;
 	private final ProxyConfig proxyConfig;
