@@ -60,7 +60,15 @@ public class RmiServerData extends UnicastRemoteObject implements IRmiServerData
 		return null;
 	}
 
-	public void subscribe(IRmiClientData data) throws RemoteException {
+	public String subscribe(IRmiClientData data) throws RemoteException {
+		if (!proxyInfo.getFiles().containsKey(data.getFilename())) {
+			return "File does not exist: "+data.getFilename();
+		}
+		if (proxyInfo.getFiles().get(data.getFilename()).getDownloadCounter() >= data.getCount()) {
+			return "The specified download counter for "+data.getFilename()+" is already reached";
+		}
+
 		proxyInfo.addSubscription(data);
+		return null;
 	}
 }

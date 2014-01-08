@@ -171,4 +171,8 @@ public class ProxyManager implements IProxy
 		}
 		return response;
 	}
+
+	public void shutdown() {
+		proxyInfo.pruneSubscriptions(user);
+	}
 }

@@ -260,8 +260,12 @@ public abstract class ClientCommands extends ResponseUtil implements IClientCli,
 			return new MessageResponse("Please log in to subscribe");
 		}
 		try {
-			rmiData.subscribe(new RmiClientData(user, filename, count));
-			return new MessageResponse("Successfully subscribed for file " + filename);
+			String result = rmiData.subscribe(new RmiClientData(user, filename, count));
+			if (result == null) {
+				return new MessageResponse("Successfully subscribed for file " + filename);
+			} else {
+				return new MessageResponse(result);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new MessageResponse("An error occurred: " +e.getMessage());

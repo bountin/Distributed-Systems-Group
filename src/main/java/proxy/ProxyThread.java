@@ -84,6 +84,7 @@ public class ProxyThread extends SecureSocketThread
 		}
 		finally
 		{
+			proxyManager.shutdown();
 			shutdown();
 		}
 	}

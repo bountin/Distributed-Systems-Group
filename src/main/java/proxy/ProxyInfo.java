@@ -88,8 +88,6 @@ public class ProxyInfo
 		files.get(filename).increaseDownloadCounter();
 		int count = files.get(filename).getDownloadCounter();
 
-		System.out.println("subscribtion count:" + downloadSubscriptions.size());
-
 		Set<IRmiClientData> toRemove = new HashSet<IRmiClientData>();
 
 		for(IRmiClientData subscription: downloadSubscriptions) {
