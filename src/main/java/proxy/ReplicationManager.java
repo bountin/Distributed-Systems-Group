@@ -74,7 +74,7 @@ public class ReplicationManager
 			VersionResponse versionResponse = null;
 			try
 			{
-				Response response = MyUtil.sendRequest(versionRequest, fileServerData.getNetworkId());
+				Response response = MyUtil.sendRequest(versionRequest, fileServerData.getNetworkId(), proxyInfo.getHmacKeyPath());
 				if(response instanceof MessageResponse)
 				{
 					String message = ((MessageResponse)response).getMessage();
@@ -171,7 +171,7 @@ public class ReplicationManager
 	private synchronized Response synchronizeFilesOnFileServer(FileServerData data, List<FileServerData> oldReadQuorumServers, List<FileServerData> newReadQuorumServers) throws Exception
 	{
 		HMACRequest<FileInfoListRequest> request = new HMACRequest<FileInfoListRequest>(new FileInfoListRequest(), proxyInfo.getHmacKeyPath());
-		FileInfoListResponse fileInfoListResponse = (FileInfoListResponse)MyUtil.sendRequest(request, data.getNetworkId());
+		FileInfoListResponse fileInfoListResponse = (FileInfoListResponse)MyUtil.sendRequest(request, data.getNetworkId(), proxyInfo.getHmacKeyPath());
 		List<FileInfo> filesOnFileServer = fileInfoListResponse.getFileInfos();
 		Set<String> filesToUpload = new HashSet<String>();
 		Map<String, FileInfo> filesAlreadyOnOtherServers = proxyInfo.getMergedListRequest(newReadQuorumServers);

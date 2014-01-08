@@ -9,6 +9,9 @@ import java.io.FileInputStream;
 import java.security.Key;
 
 public class HMAC {
+
+	public static final String VERIFICATION_ERROR_MESSAGE = "Verification of HMAC failed";
+
 	static public String getHMAC(String message, String keyPath) throws HMACException {
 		try {
 			byte[] keyBytes = new byte[1024];

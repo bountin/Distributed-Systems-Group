@@ -87,7 +87,7 @@ public class ProxyInfo
 			// minUsageFileServer with newest version of file
 			FileServerData minUsageFileServer = replicationInfo.getLowestReadQuorumWithHighestVersion(filename).getFileServerData();
 
-			Response response = MyUtil.sendRequest(request, minUsageFileServer.getNetworkId());
+			Response response = MyUtil.sendRequest(request, minUsageFileServer.getNetworkId(), getHmacKeyPath());
 			if(response instanceof MessageResponse)
 			{
 				throw new Exception("error downloading file for replication\nfile: " + filename + "\nfileserver: " + data + "\ncause: " + ((MessageResponse)response).getMessage());
@@ -182,7 +182,7 @@ public class ProxyInfo
 			try
 			{
 				HMACRequest<FileInfoListRequest> request = new HMACRequest<FileInfoListRequest>(new FileInfoListRequest(), hmacKeyPath);
-				Response response = MyUtil.sendRequest(request, fileServerData.getNetworkId());
+				Response response = MyUtil.sendRequest(request, fileServerData.getNetworkId(), getHmacKeyPath());
 
 				if(response instanceof MessageResponse)
 				{
@@ -213,7 +213,7 @@ public class ProxyInfo
 		for(FileServerData fileServerData : fileServers)
 		{
 			HMACRequest<VersionRequest> versionRequest = new HMACRequest<VersionRequest>(new VersionRequest(filename), hmacKeyPath);
-			Response response = MyUtil.sendRequest(versionRequest, fileServerData.getNetworkId());
+			Response response = MyUtil.sendRequest(versionRequest, fileServerData.getNetworkId(), getHmacKeyPath());
 			if(response instanceof MessageResponse)
 			{
 				if(((MessageResponse)response).getMessage().equals("file not found on server"))
@@ -357,7 +357,7 @@ public class ProxyInfo
 		{
 			try
 			{
-				MyUtil.sendRequest(request, data.getNetworkId());
+				MyUtil.sendRequest(request, data.getNetworkId(), getHmacKeyPath());
 			}
 			catch(Exception e)
 			{
@@ -414,7 +414,7 @@ public class ProxyInfo
 	{
 		try
 		{
-			Response response = MyUtil.sendRequest(new HMACRequest<ListRequest>(new ListRequest(), hmacKeyPath), data.getNetworkId());
+			Response response = MyUtil.sendRequest(new HMACRequest<ListRequest>(new ListRequest(), hmacKeyPath), data.getNetworkId(), getHmacKeyPath());
 			if(response instanceof MessageResponse)
 			{
 				throw new Exception(((MessageResponse)response).getMessage());
@@ -464,7 +464,7 @@ public class ProxyInfo
 		{
 			// download from server with file
 			HMACRequest<DownloadForReplicationRequest> request = new HMACRequest<DownloadForReplicationRequest>(new DownloadForReplicationRequest(filename), hmacKeyPath);
-			Response response = MyUtil.sendRequest(request, fromServer.getNetworkId());
+			Response response = MyUtil.sendRequest(request, fromServer.getNetworkId(), getHmacKeyPath());
 			DownloadForReplicationResponse downloadResponse = (DownloadForReplicationResponse)response;
 
 			addFile(new FileInfo(downloadResponse.getFilename(), downloadResponse.getContent().length, downloadResponse.getVersion()));

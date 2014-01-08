@@ -3,6 +3,7 @@ package server;
 import java.io.IOException;
 import java.net.Socket;
 
+import message.Response;
 import message.request.DownloadFileRequest;
 import message.request.DownloadForReplicationRequest;
 import message.request.FileInfoListRequest;
@@ -11,7 +12,9 @@ import message.request.InfoRequest;
 import message.request.ListRequest;
 import message.request.UploadRequest;
 import message.request.VersionRequest;
+import message.response.HMACResponse;
 import message.response.MessageResponse;
+import util.HMAC;
 import util.MyUtil;
 import util.SocketThread;
 
@@ -41,8 +44,8 @@ public class FileServerThread extends SocketThread
 				{
 					if(!((HMACRequest)inRequest).verify(fileServerManager.getFileServerConfig().getHmacKeyPath()))
 					{
-						System.out.println("Verification of HMAC failed: " + ((HMACRequest)inRequest).toString());
-						outResponse = new MessageResponse("Verification of HMAC failed");
+						System.out.println("Verification of HMAC failed: " + inRequest.toString());
+						outResponse = new MessageResponse(HMAC.VERIFICATION_ERROR_MESSAGE);
 					}
 					else
 					{
@@ -76,6 +79,8 @@ public class FileServerThread extends SocketThread
 							outResponse = new MessageResponse("Request \"" + inRequest.getClass().getName() + "\" is not supported by this fileserver");
 						}
 					}
+
+					outResponse = new HMACResponse<Response>((Response) outResponse, fileServerManager.getFileServerConfig().getHmacKeyPath());
 				}
 				else
 				{

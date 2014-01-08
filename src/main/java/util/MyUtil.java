@@ -13,6 +13,8 @@ import java.security.PublicKey;
 
 import message.Request;
 import message.Response;
+import message.response.HMACResponse;
+import message.response.MessageResponse;
 import server.NetworkId;
 import cli.Shell;
 
@@ -169,9 +171,36 @@ public final class MyUtil
 
 	}
 
-	public static Response sendRequest(Request request, NetworkId networkId) throws Exception
+	public static Response sendRequest(Request request, NetworkId networkId, String hmacKeypath) throws Exception
 	{
-		return sendRequest(request, networkId.getAddress(), networkId.getPort());
+		for (int i=0; i<5; i++) {
+			Response response = sendRequest(request, networkId.getAddress(), networkId.getPort());
+			if (!(response instanceof HMACResponse)) {
+				String s = "Expected a HMAC signed response, got " + response.toString();
+				System.out.println(s);
+				throw new Exception(s);
+			}
+
+			HMACResponse hmacResponse = (HMACResponse) response;
+			try {
+				if (!hmacResponse.verify(hmacKeypath)) {
+					System.out.println("Verification of a fileserver's HMAC Response signature failed: "+hmacResponse.toString());
+					continue;
+				}
+
+				if (hmacResponse.getResponse() instanceof MessageResponse && ((MessageResponse) hmacResponse.getResponse()).getMessage().contains(HMAC.VERIFICATION_ERROR_MESSAGE)) {
+					System.out.println("A fileserver failed verifying our HMAC of " + request.toString());
+					continue;
+				}
+
+				return hmacResponse.getResponse();
+			} catch (HMACException e) {
+				System.out.println("Verifying HMAC failed: " + e.getMessage());
+				// continue;
+			}
+		}
+
+		return new MessageResponse("HMAC Verification failed five times");
 	}
 
 	public static void writeToShell(Shell shell, String string)
