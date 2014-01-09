@@ -22,8 +22,9 @@ public class Client extends ClientCommands implements Runnable
 		new ComponentFactory().startClient(new Config("client"), new Config("mc"), new Shell("client", System.out, System.in));
 	}
 
-	public Client(ClientConfig config, ManagementConfig managementConfig, Shell shell2)
+	public Client(ClientConfig config, ManagementConfig managementConfig, Shell shell)
 	{
+		this.shell = shell;
 		this.clientConfig = config;
 		this.manageConfig = managementConfig;
 		Thread thread = new Thread(this);
