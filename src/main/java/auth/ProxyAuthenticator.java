@@ -35,17 +35,17 @@ public class ProxyAuthenticator
 		rsaChannel.setPublicKey(proxyConfig.getUserPublicKeys().getPublicKey(loginRequest.getUsername()));
 
 		// !ok <client-challenge> <proxy-challenge> <secret-key> <iv-parameter>
-		AuthProxyChallenge loginAuthResponse = initializeLoginResponse(loginRequest);
-		assert loginAuthResponse.toString().matches("!ok [" + B64 + "]{43}= [" + B64 + "]{43}= [" + B64 + "]{43}= [" + B64 + "]{22}==") : "2nd message";
-		objectRSAChannel.sendObject(loginAuthResponse);
+		AuthProxyChallenge loginResponse = initializeLoginResponse(loginRequest);
+		assert loginResponse.toString().matches("!ok [" + B64 + "]{43}= [" + B64 + "]{43}= [" + B64 + "]{43}= [" + B64 + "]{22}==") : "2nd message";
+		objectRSAChannel.sendObject(loginResponse);
 
 		// <proxy-challenge>
-		Channel aesChannel = new AESChannel(base64Channel, loginAuthResponse.getSecretKey(), loginAuthResponse.getIvParameter());
+		Channel aesChannel = new AESChannel(base64Channel, loginResponse.getSecretKey(), loginResponse.getIvParameter());
 		ObjectChannel objectAESChannel = new ObjectByteArrayConverterChannel(aesChannel);
 
-		AuthSuccess loginDone = (AuthSuccess)objectAESChannel.receiveObject();
-		assert loginDone.toString().matches("[" + B64 + "]{43}=") : "3rd message";
-		if(!Arrays.equals(loginAuthResponse.getProxyChallenge(), (loginDone.getProxyChallenge())))
+		AuthSuccess loginSuccess = (AuthSuccess)objectAESChannel.receiveObject();
+		assert loginSuccess.toString().matches("[" + B64 + "]{43}=") : "3rd message";
+		if(!Arrays.equals(loginResponse.getProxyChallenge(), (loginSuccess.getProxyChallenge())))
 		{
 			throw new AuthenticationException("client could not prove it's identity");
 		}
