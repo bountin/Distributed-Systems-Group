@@ -2,6 +2,7 @@ package test.loadtest;
 
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.System;
 import java.util.TimerTask;
 
 import client.IClientCli;
@@ -26,11 +27,12 @@ public class DownloadSender extends TimerTask
 		{
 			try
 			{
-				out.println(client.download(download));
+				client.buy(1000);
+				client.download(download);
 			}
 			catch(IOException e)
 			{
-				out.print(e);
+				out.println(e);
 			}
 		}
 	}

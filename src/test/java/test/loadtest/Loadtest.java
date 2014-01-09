@@ -3,6 +3,7 @@ package test.loadtest;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.System;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -101,11 +102,13 @@ public class Loadtest implements Runnable
 	@After
 	public void after() throws Exception
 	{
-		Thread.sleep(3000);
+		Thread.sleep(30000);
+		System.err.println("Cleaning up ...");
 		for(Timer timer : timers)
 		{
 			timer.cancel();
 		}
+		System.err.println("... Timers killed");
 		try
 		{
 			proxy.exit();
@@ -115,6 +118,7 @@ public class Loadtest implements Runnable
 			// This should not happen. In case it does, output the stack trace for easier trouble shooting.
 			e.printStackTrace();
 		}
+		System.err.println("... Proxy killed");
 		try
 		{
 			server.exit();
@@ -124,6 +128,7 @@ public class Loadtest implements Runnable
 			// This should not happen. In case it does, output the stack trace for easier trouble shooting.
 			e.printStackTrace();
 		}
+		System.err.println("... Fileserver killed");
 		for(Client client : clients)
 		{
 			try
@@ -136,6 +141,7 @@ public class Loadtest implements Runnable
 				e.printStackTrace();
 			}
 		}
+		System.err.println("... Clients killed");
 		deleteFiles();
 		System.err.println("Loadtest END");
 	}
@@ -252,15 +258,15 @@ public class Loadtest implements Runnable
 	{
 		if((1 - config.getOverwriteRatio()) > 0)
 		{
-			uploadNonOverwriteSec = (int)Math.ceil((60.0 / config.getUploadsPerMin()) / (1.0 - config.getOverwriteRatio())) * 1000;
+			uploadNonOverwriteSec = (int)Math.ceil((60.0 / config.getUploadsPerMin()) / (1.0 - config.getOverwriteRatio()) * 1000);
 		}
 		if(config.getOverwriteRatio() > 0)
 		{
-			uploadOverwriteSec = (int)Math.ceil((60.0 / config.getUploadsPerMin()) / config.getOverwriteRatio()) * 1000;
+			uploadOverwriteSec = (int)Math.ceil((60.0 / config.getUploadsPerMin()) / config.getOverwriteRatio() * 1000);
 		}
 		if(config.getDownloadsPerMin() > 0)
 		{
-			downloadSec = (int)Math.ceil(60.0 / config.getDownloadsPerMin()) * 1000;
+			downloadSec = (int)Math.ceil(60.0 / config.getDownloadsPerMin() * 1000);
 		}
 		System.out.println("uploadnono " + uploadNonOverwriteSec);
 		System.out.println("uploadover " + uploadOverwriteSec);
@@ -312,7 +318,7 @@ public class Loadtest implements Runnable
 
 		synchronized(clients) {
 			Timer timer = new Timer();
-			timer.schedule(new SubscriptionSender(clients.get(0), System.out, downloadFilename, config.getDownloadsPerMin() * config.getNumberClients()), 0, 900);
+			timer.schedule(new SubscriptionSender(clients.get(0), System.out, downloadFilename, config.getNumberClients()), 0, downloadSec);
 			timers.add(timer);
 		}
 
