@@ -45,7 +45,7 @@ public class Loadtest implements Runnable
 	private final File uploadDownloadDir = new File(folder, "download");
 	private String uploadOverwriteFilename = "update.txt";
 	private String uploadFilename = "update.txt";
-	private String downloadFilename = "fsxf1.txt";
+	private String downloadFilename = "fs1.txt";
 	private File uploadFile = new File(uploadDownloadDir, uploadFilename);
 	private List<Client> clients = new ArrayList<Client>();
 	private final String CLIENT = "alice";// clientname
@@ -252,15 +252,15 @@ public class Loadtest implements Runnable
 	{
 		if((1 - config.getOverwriteRatio()) > 0)
 		{
-			uploadNonOverwriteSec = (int)Math.ceil((60.0 / config.getUploadsPerMin()) / (1.0 - config.getOverwriteRatio()));
+			uploadNonOverwriteSec = (int)Math.ceil((60.0 / config.getUploadsPerMin()) / (1.0 - config.getOverwriteRatio())) * 1000;
 		}
 		if(config.getOverwriteRatio() > 0)
 		{
-			uploadOverwriteSec = (int)Math.ceil((60.0 / config.getUploadsPerMin()) / config.getOverwriteRatio());
+			uploadOverwriteSec = (int)Math.ceil((60.0 / config.getUploadsPerMin()) / config.getOverwriteRatio()) * 1000;
 		}
 		if(config.getDownloadsPerMin() > 0)
 		{
-			downloadSec = (int)Math.ceil(60.0 / config.getDownloadsPerMin());
+			downloadSec = (int)Math.ceil(60.0 / config.getDownloadsPerMin()) * 1000;
 		}
 		System.out.println("uploadnono " + uploadNonOverwriteSec);
 		System.out.println("uploadover " + uploadOverwriteSec);
