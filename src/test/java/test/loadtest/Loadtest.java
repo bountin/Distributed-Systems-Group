@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 
+import client.Client;
 import model.KeyHolder;
 import model.MapKeyHolder;
 import objects.User;
@@ -32,7 +33,6 @@ import cli.Shell;
 import cli.TestInputStream;
 import cli.TestOutputStream;
 import client.ClientConfig;
-import client.IClientCli;
 import client.ManagementConfig;
 
 public class Loadtest implements Runnable
@@ -47,7 +47,7 @@ public class Loadtest implements Runnable
 	private String uploadFilename = "update.txt";
 	private String downloadFilename = "fsxf1.txt";
 	private File uploadFile = new File(uploadDownloadDir, uploadFilename);
-	private List<IClientCli> clients = new ArrayList<IClientCli>();
+	private List<Client> clients = new ArrayList<Client>();
 	private final String CLIENT = "alice";// clientname
 	private final String host = "localhost";
 	private final Integer tcpPort = 12290;
@@ -124,13 +124,13 @@ public class Loadtest implements Runnable
 			// This should not happen. In case it does, output the stack trace for easier trouble shooting.
 			e.printStackTrace();
 		}
-		for(IClientCli client : clients)
+		for(Client client : clients)
 		{
 			try
 			{
 				client.exit();
 			}
-			catch(IOException e)
+			catch(Exception e)
 			{
 				// This should not happen. In case it does, output the stack trace for easier trouble shooting.
 				e.printStackTrace();
@@ -168,7 +168,7 @@ public class Loadtest implements Runnable
 			{
 				ClientConfig clientConfig = createClientConfig(i, userKeyHolder, publicProxyKey);
 				ManagementConfig managementConfig = createManagementConfig(userKeyHolder);
-				IClientCli client = componentFactory.startClient(clientConfig, managementConfig, new Shell(CLIENT + i, System.out, new TestInputStream()));
+				Client client = (Client)componentFactory.startClient(clientConfig, managementConfig, new Shell(CLIENT + i, System.out, new TestInputStream()));
 				clients.add(client);
 			}
 		}
@@ -300,13 +300,28 @@ public class Loadtest implements Runnable
 	@Test
 	public void test() throws Exception
 	{
-		Thread.sleep(1000);
+		Thread.sleep(500);
+
+		synchronized(clients) {
+			for(int i = 0; i < config.getNumberClients(); i++) {
+				clients.get(i).login(CLIENT + (i + 1), "");
+			}
+		}
+
+		Thread.sleep(500);
+
+		synchronized(clients) {
+			Timer timer = new Timer();
+			timer.schedule(new SubscriptionSender(clients.get(0), System.out, downloadFilename, config.getDownloadsPerMin() * config.getNumberClients()), 0, 900);
+			timers.add(timer);
+		}
+
+		Thread.sleep(200);
+
 		synchronized(clients)
 		{
 			for(int i = 0; i < config.getNumberClients(); i++)
 			{
-				clients.get(i).login(CLIENT + (i + 1), "");
-
 				Timer timer = new Timer();
 				if(uploadNonOverwriteSec != null)
 				{
@@ -324,6 +339,5 @@ public class Loadtest implements Runnable
 				timers.add(timer);
 			}
 		}
-
 	}
 }
