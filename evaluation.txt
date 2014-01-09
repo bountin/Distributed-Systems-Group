@@ -1,0 +1,23 @@
+Macbook Pro Retina mid 2012
+Mac OS X 10.9 'Mavericks'
+2.6 GHz Intel i7
+16G memory
+with SSD
+
+some problems found, and some persistent without fix:
+ - more than 7 clients don't work very well
+ - more than 450 downloads/s/client (with 5 clients) too
+
+A pretty stable configuration was:
+clients=5
+uploadsPerMin=30
+downloadsPerMin=450
+fileSizeKB=100
+overwriteRatio=1.0
+
+The cpu usage is jumping between 30% and 100%.
+Memory consumption starts at about 60-70MB and increases to nearly 90Mb after a minute.
+
+Some effort should be put into synchronization optimization since a big proxyInfo lock is not the best thing
+possible. Also the subscribing part is implemented very poorly (from a datastructure perspective) because of
+a lack of time.
