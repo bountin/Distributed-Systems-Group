@@ -4,7 +4,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 
-import message.MessageResponseException;
 import message.Response;
 import message.request.BuyRequest;
 import message.request.DownloadTicketRequest;
@@ -64,10 +63,11 @@ public class ProxyManager implements IProxy
 		{
 			// set highestVersion and minUsageFileServer
 			VersionFileServerData verionFileServer = proxyInfo.getReplicationInfo().getLowestReadQuorumWithHighestVersion(filename);
+
 			highestVersion = verionFileServer.getVersion();
 			minUsageFileServer = verionFileServer.getFileServerData();
 		}
-		catch(MessageResponseException e)
+		catch(Exception e)
 		{
 			return new MessageResponse(e.getMessage());
 		}
@@ -132,6 +132,11 @@ public class ProxyManager implements IProxy
 		return new MessageResponse("Successfully logged out.");
 	}
 
+	public void shutdown()
+	{
+		proxyInfo.pruneSubscriptions(user);
+	}
+
 	@Override
 	public MessageResponse upload(UploadRequest request) throws IOException
 	{
@@ -142,7 +147,7 @@ public class ProxyManager implements IProxy
 
 		// get version from read quorum servers and update request
 		int version;
-		HMACRequest<UploadRequest> hmacRequest=null;
+		HMACRequest<UploadRequest> hmacRequest = null;
 		try
 		{
 			version = proxyInfo.getNextFileVersion(request.getFilename());
@@ -170,9 +175,5 @@ public class ProxyManager implements IProxy
 			proxyInfo.decreaseUsage(data.getNetworkId(), request.getContent().length * 2);
 		}
 		return response;
-	}
-
-	public void shutdown() {
-		proxyInfo.pruneSubscriptions(user);
 	}
 }
