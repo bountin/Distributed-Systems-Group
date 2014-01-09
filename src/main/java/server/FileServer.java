@@ -5,6 +5,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Timer;
 
@@ -27,7 +28,7 @@ public class FileServer extends FileServerCommands implements Runnable
 	private FileServerConfig fileServerConfig;
 	private FileServerManager fileServerManager;
 	private boolean closed;
-	private List<FileServerThread> fileServerThreads = new ArrayList<FileServerThread>();
+	private List<FileServerThread> fileServerThreads = Collections.synchronizedList(new ArrayList<FileServerThread>());
 
 	public static void main(String[] args)
 	{
@@ -151,9 +152,12 @@ public class FileServer extends FileServerCommands implements Runnable
 		closed = true;
 		try
 		{
-			for(FileServerThread thread : fileServerThreads)
+			synchronized(fileServerThreads)
 			{
-				thread.shutdown();
+				for(FileServerThread thread : fileServerThreads)
+				{
+					thread.shutdown();
+				}
 			}
 			timer.cancel();
 

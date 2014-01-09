@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import util.ComponentFactory;
@@ -18,7 +19,7 @@ public class Proxy extends ProxyCommands implements Runnable
 {
 	private ServerSocket proxySocket;
 	private ShellThread shellThread;
-	private List<ProxyThread> proxyThreads = new ArrayList<ProxyThread>();
+	private List<ProxyThread> proxyThreads = Collections.synchronizedList(new ArrayList<ProxyThread>());
 	private boolean closed;
 	private IsAliveHandler isAliveHandler;
 	private ProxyConfig proxyConfig;
@@ -142,9 +143,12 @@ public class Proxy extends ProxyCommands implements Runnable
 		}
 		setClosed(true);
 		System.err.println("Stopping clients ...");
-		for(ProxyThread thread : proxyThreads)
+		synchronized(proxyThreads)
 		{
-			thread.shutdown();
+			for(ProxyThread thread : proxyThreads)
+			{
+				thread.shutdown();
+			}
 		}
 		if(managementComponent != null)
 		{
