@@ -1,5 +1,6 @@
 package proxy;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -45,9 +46,9 @@ public class ReplicationManager
 	 *            gets returned
 	 * @return
 	 * @return
-	 * @throws MessageResponseException
+	 * @throws Exception
 	 */
-	public synchronized VersionFileServerData getLowestReadQuorumWithHighestVersion(String filename) throws MessageResponseException
+	public synchronized VersionFileServerData getLowestReadQuorumWithHighestVersion(String filename) throws Exception
 	{
 		Integer highestVersion = null;
 		FileServerData minUsageFileServer = null;
@@ -109,6 +110,10 @@ public class ReplicationManager
 					minUsageFileServer = fileServerData;
 				}
 			}
+		}
+		if(minUsageFileServer == null || highestVersion == null)
+		{
+			throw new FileNotFoundException("no version of file " + filename + " found");
 		}
 		return new VersionFileServerData(minUsageFileServer, highestVersion);
 	}
@@ -181,7 +186,12 @@ public class ReplicationManager
 	private synchronized Response synchronizeFilesOnFileServer(FileServerData data, List<FileServerData> oldReadQuorumServers, List<FileServerData> newReadQuorumServers) throws Exception
 	{
 		HMACRequest<FileInfoListRequest> request = new HMACRequest<FileInfoListRequest>(new FileInfoListRequest(), proxyInfo.getHmacKeyPath());
-		FileInfoListResponse fileInfoListResponse = (FileInfoListResponse)MyUtil.sendRequest(request, data.getNetworkId(), proxyInfo.getHmacKeyPath());
+		Response response = MyUtil.sendRequest(request, data.getNetworkId(), proxyInfo.getHmacKeyPath());
+		if(response instanceof MessageResponse)
+		{
+			throw new Exception(((MessageResponse)response).getMessage());
+		}
+		FileInfoListResponse fileInfoListResponse = (FileInfoListResponse)response;
 		List<FileInfo> filesOnFileServer = fileInfoListResponse.getFileInfos();
 		Set<String> filesToUpload = new HashSet<String>();
 		Map<String, FileInfo> filesAlreadyOnOtherServers = proxyInfo.getMergedListRequest(newReadQuorumServers);
