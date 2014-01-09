@@ -103,7 +103,7 @@ public class FileServerManager implements IFileServer
 		return new FileInfoListResponse(files.values());
 	}
 
-	public FileServerConfig getFileServerConfig()
+	public synchronized FileServerConfig getFileServerConfig()
 	{
 		return fileServerConfig;
 	}
