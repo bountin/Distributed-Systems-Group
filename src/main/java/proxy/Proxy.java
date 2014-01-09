@@ -60,6 +60,17 @@ public class Proxy extends ProxyCommands implements Runnable
 			shell.writeLine("hmac.key: The path to the secret key that is used to authenticate the proxy's communication with the file servers.");
 			return;
 		}
+		initialize(shell, new ManagementConfig(manageConfig));
+	}
+
+	public Proxy(ProxyConfig proxyConfig, ManagementConfig manageConfig, Shell shell, String password) throws UnvalidConfigException, IOException
+	{
+		this.proxyConfig = proxyConfig;
+		initialize(shell, manageConfig);
+	}
+
+	private void initialize(Shell shell, ManagementConfig manageConfig) throws UnvalidConfigException
+	{
 		try
 		{
 			ProxyInfo proxyInfo = ProxyInfo.getInstance();
@@ -80,7 +91,7 @@ public class Proxy extends ProxyCommands implements Runnable
 			isAliveHandler = new IsAliveHandler(datagramSocket, proxyConfig.getTimeout(), proxyConfig.getCheckPeriod());
 			isAliveHandler.start();
 
-			managementComponent = new ManagementComponent(new ManagementConfig(manageConfig));
+			managementComponent = new ManagementComponent(manageConfig);
 			managementComponent.start(proxyInfo, proxyConfig);
 		}
 		catch(IOException e)
@@ -88,6 +99,7 @@ public class Proxy extends ProxyCommands implements Runnable
 			System.err.printf("Could not listen on port: %d.", proxyConfig.getTcpPort());
 			System.err.println("Cause: " + e);
 		}
+
 	}
 
 	@Override

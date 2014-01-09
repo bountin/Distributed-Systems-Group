@@ -35,6 +35,19 @@ public class ProxyConfig
 		this.publicKey = EncryptionUtil.getPublicKeyFromFile(new File(publicKeyPath));
 	}
 
+	public ProxyConfig(Integer tcpPort, Integer udpPort, Long timeout, Long checkPeriod, PublicKey publicKey, PrivateKey privateKey, KeyHolder userPublicKeys, String hmacKeyPath)
+	{
+		super();
+		this.tcpPort = tcpPort;
+		this.udpPort = udpPort;
+		this.timeout = timeout;
+		this.checkPeriod = checkPeriod;
+		this.publicKey = publicKey;
+		this.privateKey = privateKey;
+		this.userPublicKeys = userPublicKeys;
+		this.hmacKeyPath = hmacKeyPath;
+	}
+
 	public Long getCheckPeriod()
 	{
 		return checkPeriod;

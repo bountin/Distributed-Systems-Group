@@ -32,21 +32,28 @@ public class MapKeyHolder implements KeyHolder
 	@Override
 	public PublicKey getPublicKey(String username) throws Exception
 	{
-		KeyPair pair = keys.get(username);
-		if(pair != null)
+		synchronized(this)
 		{
-			return pair.getPublic();
-		}
-		else
-		{
-			throw new Exception("public key not found");
+			KeyPair pair = keys.get(username);
+			if(pair != null)
+			{
+				return pair.getPublic();
+			}
+			else
+			{
+				throw new Exception("public key not found");
+			}
 		}
 	}
 
 	// TODO implement me!
 	@Override
-	public void setPublicKey(String username, PublicKey key) throws IOException {
-		throw new IOException("IMPLEMENT ME!");
+	public void setPublicKey(String username, PublicKey key) throws IOException
+	{
+		synchronized(this)
+		{
+			// TODO
+		}
 	}
 
 }
