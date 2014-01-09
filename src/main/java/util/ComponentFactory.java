@@ -2,6 +2,7 @@ package util;
 
 import proxy.IProxyCli;
 import proxy.Proxy;
+import proxy.ProxyConfig;
 import server.FileServer;
 import server.IFileServerCli;
 import test.loadtest.Loadtest;
@@ -75,4 +76,10 @@ public class ComponentFactory
 	{
 		return new Proxy(config, mc, shell, "12345");
 	}
+
+	public IProxyCli startProxy(ProxyConfig config, ManagementConfig mc, Shell shell) throws Exception
+	{
+		return new Proxy(config, mc, shell, "12345");
+	}
+
 }
