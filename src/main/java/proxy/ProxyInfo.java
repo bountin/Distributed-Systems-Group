@@ -59,6 +59,9 @@ public class ProxyInfo
 
 	public synchronized void addFile(FileInfo filenInfo)
 	{
+		if (files.containsKey(filenInfo.getFilename())) {
+			filenInfo.setDownloadCounter(files.get(filenInfo.getFilename()).getDownloadCounter());
+		}
 		files.put(filenInfo.getFilename(), filenInfo);
 	}
 
@@ -370,7 +373,7 @@ public class ProxyInfo
 					toRemove.add(subscription);
 				}
 			}
-			catch(RemoteException e)
+			catch(Exception e)
 			{
 				toRemove.add(subscription);
 			}

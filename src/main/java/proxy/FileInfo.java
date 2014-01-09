@@ -47,7 +47,7 @@ public class FileInfo implements Serializable
 		this.version = version;
 	}
 
-	public int getDownloadCounter() {
+	public synchronized int getDownloadCounter() {
 		return downloadCounter;
 	}
 
@@ -57,7 +57,11 @@ public class FileInfo implements Serializable
 		return version + " " + filename;
 	}
 
-	public void increaseDownloadCounter() {
+	public synchronized void increaseDownloadCounter() {
 		downloadCounter++;
+	}
+
+	public synchronized void setDownloadCounter(int downloadCounter) {
+		this.downloadCounter = downloadCounter;
 	}
 }
