@@ -441,7 +441,11 @@ public class ProxyInfo
 		{
 			try
 			{
-				MyUtil.sendRequest(request, data.getNetworkId(), getHmacKeyPath());
+				Response response = MyUtil.sendRequest(request, data.getNetworkId(), getHmacKeyPath());
+				if(response instanceof MessageResponse)
+				{
+					return (MessageResponse)response;
+				}
 			}
 			catch(Exception e)
 			{
