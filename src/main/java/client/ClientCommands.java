@@ -276,7 +276,7 @@ public abstract class ClientCommands extends ResponseUtil implements IClientCli,
 		File file = new File(clientConfig.getDownloadDir(), filename);
 		if(!file.exists())
 		{
-			return new MessageResponse("file " + filename + " not in downloadDir " + clientConfig.getDownloadDir());
+			return new MessageResponse("file " + file.getPath() + " not found for upload");
 		}
 		byte[] content = new byte[new Long(file.length()).intValue()];
 		try
