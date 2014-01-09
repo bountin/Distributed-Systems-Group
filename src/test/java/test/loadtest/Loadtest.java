@@ -3,7 +3,6 @@ package test.loadtest;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.lang.System;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -13,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 
-import client.Client;
 import model.KeyHolder;
 import model.MapKeyHolder;
 import objects.User;
@@ -33,6 +31,7 @@ import util.UnvalidConfigException;
 import cli.Shell;
 import cli.TestInputStream;
 import cli.TestOutputStream;
+import client.Client;
 import client.ClientConfig;
 import client.ManagementConfig;
 
@@ -42,12 +41,12 @@ public class Loadtest implements Runnable
 	private IProxyCli proxy;
 	private IFileServerCli server;
 	private final String folder = System.getProperty("user.dir");
-	// private final File downloadDir = new File(System.getProperty("java.io.tmpdir"), "download");
 	private final File uploadDownloadDir = new File(folder, "download");
-	private String uploadOverwriteFilename = "update.txt";
+	private String uploadOverwriteFilename = "updateCopy.txt";
 	private String uploadFilename = "update.txt";
 	private String downloadFilename = "fs1.txt";
 	private File uploadFile = new File(uploadDownloadDir, uploadFilename);
+	private File uploadOverwriteFile = new File(uploadDownloadDir, uploadOverwriteFilename);
 	private List<Client> clients = new ArrayList<Client>();
 	private final String CLIENT = "alice";// clientname
 	private final String host = "localhost";
@@ -104,6 +103,7 @@ public class Loadtest implements Runnable
 	{
 		Thread.sleep(30000);
 		System.err.println("Cleaning up ...");
+
 		for(Timer timer : timers)
 		{
 			timer.cancel();
@@ -188,9 +188,10 @@ public class Loadtest implements Runnable
 
 	private void createFiles() throws IOException
 	{
-		System.out.println(uploadDownloadDir.mkdir());
+		uploadDownloadDir.mkdir();
 
 		generateFile(uploadFile, config.getFileSizeKB());
+		generateFile(uploadOverwriteFile, config.getFileSizeKB());
 	}
 
 	private ManagementConfig createManagementConfig(KeyHolder userKeyHolder)
@@ -268,9 +269,6 @@ public class Loadtest implements Runnable
 		{
 			downloadSec = (int)Math.ceil(60.0 / config.getDownloadsPerMin() * 1000);
 		}
-		System.out.println("uploadnono " + uploadNonOverwriteSec);
-		System.out.println("uploadover " + uploadOverwriteSec);
-		System.out.println("download " + downloadSec);
 	}
 
 	@Override
@@ -278,11 +276,8 @@ public class Loadtest implements Runnable
 	{
 		try
 		{
-			System.err.println("before");
 			before();
-			System.err.println("test");
 			test();
-
 		}
 		catch(Exception e)
 		{
@@ -290,14 +285,12 @@ public class Loadtest implements Runnable
 		}
 		finally
 		{
-			System.err.println("after");
 			try
 			{
 				after();
 			}
 			catch(Exception e)
 			{
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -308,15 +301,18 @@ public class Loadtest implements Runnable
 	{
 		Thread.sleep(500);
 
-		synchronized(clients) {
-			for(int i = 0; i < config.getNumberClients(); i++) {
+		synchronized(clients)
+		{
+			for(int i = 0; i < config.getNumberClients(); i++)
+			{
 				clients.get(i).login(CLIENT + (i + 1), "");
 			}
 		}
 
 		Thread.sleep(500);
 
-		synchronized(clients) {
+		synchronized(clients)
+		{
 			Timer timer = new Timer();
 			timer.schedule(new SubscriptionSender(clients.get(0), System.out, downloadFilename, config.getNumberClients()), 0, downloadSec);
 			timers.add(timer);
@@ -331,11 +327,11 @@ public class Loadtest implements Runnable
 				Timer timer = new Timer();
 				if(uploadNonOverwriteSec != null)
 				{
-					timer.schedule(new UploadSender(clients.get(i), uploadFilename, System.out), 0, uploadNonOverwriteSec);
+					timer.schedule(new UploadSender(clients.get(i), uploadFile, System.out, false), 0, uploadNonOverwriteSec);
 				}
 				if(uploadOverwriteSec != null)
 				{
-					timer.schedule(new UploadSender(clients.get(i), uploadOverwriteFilename, System.out), 0, uploadOverwriteSec);
+					timer.schedule(new UploadSender(clients.get(i), uploadOverwriteFile, System.out, true), 0, uploadOverwriteSec);
 				}
 				if(downloadSec != null)
 				{

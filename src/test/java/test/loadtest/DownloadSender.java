@@ -2,7 +2,6 @@ package test.loadtest;
 
 import java.io.IOException;
 import java.io.PrintStream;
-import java.lang.System;
 import java.util.TimerTask;
 
 import client.IClientCli;
