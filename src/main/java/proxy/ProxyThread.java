@@ -31,50 +31,59 @@ public class ProxyThread extends SecureSocketThread
 	{
 		try
 		{
-			while(aesChannel == null)
+			while(!socket.isClosed())
 			{
-				aesChannel = ProxyAuthenticator.authenticate(socket, proxyManager, proxyConfig);
-			}
-
-			Object inRequest, outResponse = new MessageResponse("command not found");
-			while(!socket.isClosed() && (inRequest = aesChannel.receiveObject()) != null)
-			{
-				outResponse = new MessageResponse("command \"" + inRequest.toString() + "\" not found on fileserver");
-
-				if(inRequest instanceof LogoutRequest)
+				while(aesChannel == null)
 				{
-					outResponse = proxyManager.logout();
-				}
-				if(inRequest instanceof CreditsRequest)
-				{
-					outResponse = proxyManager.credits();
-				}
-				if(inRequest instanceof BuyRequest)
-				{
-					outResponse = proxyManager.buy((BuyRequest)inRequest);
-				}
-				if(inRequest instanceof DownloadTicketRequest)
-				{
-					outResponse = proxyManager.download((DownloadTicketRequest)inRequest);
-				}
-				if(inRequest instanceof UploadRequest)
-				{
-					outResponse = proxyManager.upload((UploadRequest)inRequest);
-				}
-				if(inRequest instanceof ListRequest)
-				{
-					outResponse = proxyManager.list();
-				}
-				if(inRequest instanceof ExitRequest)
-				{
-					outResponse = proxyManager.logout();
+					aesChannel = ProxyAuthenticator.authenticate(socket, proxyManager, proxyConfig);
 				}
 
-				aesChannel.sendObject(outResponse);
-
-				if(inRequest instanceof ExitRequest)
+				Object inRequest, outResponse = new MessageResponse("command not found");
+				while(aesChannel != null && (inRequest = aesChannel.receiveObject()) != null)
 				{
-					break;
+					boolean loggedOut = false;
+					outResponse = new MessageResponse("command \"" + inRequest.toString() + "\" not found on fileserver");
+
+					if(inRequest instanceof LogoutRequest)
+					{
+						outResponse = proxyManager.logout();
+						loggedOut = true;
+					}
+					if(inRequest instanceof CreditsRequest)
+					{
+						outResponse = proxyManager.credits();
+					}
+					if(inRequest instanceof BuyRequest)
+					{
+						outResponse = proxyManager.buy((BuyRequest)inRequest);
+					}
+					if(inRequest instanceof DownloadTicketRequest)
+					{
+						outResponse = proxyManager.download((DownloadTicketRequest)inRequest);
+					}
+					if(inRequest instanceof UploadRequest)
+					{
+						outResponse = proxyManager.upload((UploadRequest)inRequest);
+					}
+					if(inRequest instanceof ListRequest)
+					{
+						outResponse = proxyManager.list();
+					}
+					if(inRequest instanceof ExitRequest)
+					{
+						outResponse = proxyManager.logout();
+					}
+
+					aesChannel.sendObject(outResponse);
+
+					if(loggedOut)
+					{
+						aesChannel = null;
+					}
+					if(inRequest instanceof ExitRequest)
+					{
+						return;
+					}
 				}
 			}
 		}
