@@ -62,54 +62,9 @@ public class ProxyInfo
 		files.put(filenInfo.getFilename(), filenInfo);
 	}
 
-	public synchronized void addSubscription(IRmiClientData data) {
+	public synchronized void addSubscription(IRmiClientData data)
+	{
 		downloadSubscriptions.add(data);
-	}
-
-	public void pruneSubscriptions(User user) {
-		Set<IRmiClientData> toRemove = new HashSet<IRmiClientData>();
-
-		for(IRmiClientData subscription: downloadSubscriptions) {
-			try {
-				if (subscription.getUser().equals(user.getUsername())) {
-					toRemove.add(subscription);
-				}
-			} catch (RemoteException e) {
-				toRemove.add(subscription);
-			}
-		}
-
-		for (IRmiClientData subscription: toRemove) {
-			downloadSubscriptions.remove(subscription);
-			try {
-				subscription.unregister();
-			} catch (RemoteException ignored) {}
-		}
-	}
-
-	public synchronized void increaseFileDownloadCounter(String filename) {
-		files.get(filename).increaseDownloadCounter();
-		int count = files.get(filename).getDownloadCounter();
-
-		Set<IRmiClientData> toRemove = new HashSet<IRmiClientData>();
-
-		for(IRmiClientData subscription: downloadSubscriptions) {
-			try {
-				if (subscription.test(filename, count)) {
-					subscription.notifyDownloadSubscription();
-					toRemove.add(subscription);
-				}
-			} catch (RemoteException e) {
-				toRemove.add(subscription);
-			}
-		}
-
-		for (IRmiClientData subscription: toRemove) {
-			downloadSubscriptions.remove(subscription);
-			try {
-				subscription.unregister();
-			} catch (RemoteException ignored) {}
-		}
 	}
 
 	public synchronized void decreaseCredits(User user, long filesize)
@@ -122,7 +77,7 @@ public class ProxyInfo
 
 	}
 
-	public void decreaseUsage(NetworkId networkId, long filesize)
+	public synchronized void decreaseUsage(NetworkId networkId, long filesize)
 	{
 		FileServerData f = fileServerData.get(networkId);
 		if(f != null)
@@ -224,12 +179,12 @@ public class ProxyInfo
 		}
 	}
 
-	public String getHmacKeyPath()
+	public synchronized String getHmacKeyPath()
 	{
 		return hmacKeyPath;
 	}
 
-	public Map<String, FileInfo> getMergedListRequest(List<FileServerData> newReadQuorumServers)
+	public synchronized Map<String, FileInfo> getMergedListRequest(List<FileServerData> newReadQuorumServers)
 	{
 		Map<String, FileInfo> mergedFileInfos = new HashMap<String, FileInfo>();
 		for(FileServerData fileServerData : newReadQuorumServers)
@@ -261,7 +216,7 @@ public class ProxyInfo
 		return mergedFileInfos;
 	}
 
-	public int getNextFileVersion(String filename) throws Exception
+	public synchronized int getNextFileVersion(String filename) throws Exception
 	{
 		List<FileServerData> fileServers = getReplicationInfo().getReadQuorumServers();
 		int version = -1;
@@ -298,12 +253,12 @@ public class ProxyInfo
 		return onlineFileServers;
 	}
 
-	public List<FileServerData> getReadQuorumServers()
+	public synchronized List<FileServerData> getReadQuorumServers()
 	{
 		return getReplicationInfo().getReadQuorumServers();
 	}
 
-	public ReplicationManager getReplicationInfo()
+	public synchronized ReplicationManager getReplicationInfo()
 	{
 		if(replicationInfo == null)
 		{
@@ -312,12 +267,17 @@ public class ProxyInfo
 		return replicationInfo;
 	}
 
+	public synchronized KeyHolder getUserKeyHolder()
+	{
+		return userKeyHolder;
+	}
+
 	public synchronized Map<String, User> getUsers()
 	{
 		return users;
 	}
 
-	public List<FileServerData> getWriteQuorumServers()
+	public synchronized List<FileServerData> getWriteQuorumServers()
 	{
 		return getReplicationInfo().getWriteQuorumServers();
 	}
@@ -331,16 +291,54 @@ public class ProxyInfo
 		}
 	}
 
-	public void increaseUsage(FileServerData fileServer, long filesize)
+	public synchronized void increaseFileDownloadCounter(String filename)
 	{
-		FileServerData f = fileServerData.get(fileServer.getNetworkId());
-		if(f != null)
+		files.get(filename).increaseDownloadCounter();
+		int count = files.get(filename).getDownloadCounter();
+
+		Set<IRmiClientData> toRemove = new HashSet<IRmiClientData>();
+
+		for(IRmiClientData subscription : downloadSubscriptions)
 		{
-			f.setUsage(f.getUsage() + filesize);
+			try
+			{
+				if(subscription.test(filename, count))
+				{
+					subscription.notifyDownloadSubscription();
+					toRemove.add(subscription);
+				}
+			}
+			catch(RemoteException e)
+			{
+				toRemove.add(subscription);
+			}
+		}
+
+		for(IRmiClientData subscription : toRemove)
+		{
+			downloadSubscriptions.remove(subscription);
+			try
+			{
+				subscription.unregister();
+			}
+			catch(RemoteException ignored)
+			{}
 		}
 	}
 
-	public boolean isFileInfoNewerThanInMap(FileInfo info, Map<String, FileInfo> filesAlreadyOnOtherServers)
+	public synchronized void increaseUsage(FileServerData fileServer, long filesize)
+	{
+		// synchronized(fileServerData)
+		{
+			FileServerData f = fileServerData.get(fileServer.getNetworkId());
+			if(f != null)
+			{
+				f.setUsage(f.getUsage() + filesize);
+			}
+		}
+	}
+
+	public synchronized boolean isFileInfoNewerThanInMap(FileInfo info, Map<String, FileInfo> filesAlreadyOnOtherServers)
 	{
 		FileInfo f = filesAlreadyOnOtherServers.get(info.getFilename());
 		// file exists on other servers
@@ -356,6 +354,37 @@ public class ProxyInfo
 		else
 		{
 			return true;
+		}
+	}
+
+	public synchronized void pruneSubscriptions(User user)
+	{
+		Set<IRmiClientData> toRemove = new HashSet<IRmiClientData>();
+
+		for(IRmiClientData subscription : downloadSubscriptions)
+		{
+			try
+			{
+				if(subscription.getUser().equals(user.getUsername()))
+				{
+					toRemove.add(subscription);
+				}
+			}
+			catch(RemoteException e)
+			{
+				toRemove.add(subscription);
+			}
+		}
+
+		for(IRmiClientData subscription : toRemove)
+		{
+			downloadSubscriptions.remove(subscription);
+			try
+			{
+				subscription.unregister();
+			}
+			catch(RemoteException ignored)
+			{}
 		}
 	}
 
@@ -422,7 +451,7 @@ public class ProxyInfo
 		return new MessageResponse("success");
 	}
 
-	public void setHmacKeyPath(String hmacKeyPath)
+	public synchronized void setHmacKeyPath(String hmacKeyPath)
 	{
 		this.hmacKeyPath = hmacKeyPath;
 	}
@@ -463,6 +492,11 @@ public class ProxyInfo
 			getReplicationInfo().initializeNumbers();
 			synchronizeFilesOnFileServer(data);
 		}
+	}
+
+	public synchronized void setUserKeyHolder(KeyHolder userKeyHolder)
+	{
+		this.userKeyHolder = userKeyHolder;
 	}
 
 	private synchronized Response synchronizeFilesOnFileServer(FileServerData data)
@@ -531,13 +565,5 @@ public class ProxyInfo
 			sendUploadRequestToServers(hmacUploadRequest, toServers);
 		}
 
-	}
-
-	public void setUserKeyHolder(KeyHolder userKeyHolder) {
-		this.userKeyHolder = userKeyHolder;
-	}
-
-	public KeyHolder getUserKeyHolder() {
-		return userKeyHolder;
 	}
 }

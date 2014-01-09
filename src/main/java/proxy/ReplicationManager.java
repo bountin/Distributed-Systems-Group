@@ -35,14 +35,6 @@ public class ReplicationManager
 		initializeNumbers();
 	}
 
-	public int getWriteQuorum() {
-		return numberWriteQuorum;
-	}
-
-	public int getReadQuorum() {
-		return numberReadQuorum;
-	}
-
 	/**
 	 * Seeks highest version of file with given filename and server with lowest usage which have this file version. Sets highestVersion and minUsageFileServer object.
 	 * 
@@ -55,7 +47,7 @@ public class ReplicationManager
 	 * @return
 	 * @throws MessageResponseException
 	 */
-	public VersionFileServerData getLowestReadQuorumWithHighestVersion(String filename) throws MessageResponseException
+	public synchronized VersionFileServerData getLowestReadQuorumWithHighestVersion(String filename) throws MessageResponseException
 	{
 		Integer highestVersion = null;
 		FileServerData minUsageFileServer = null;
@@ -121,7 +113,7 @@ public class ReplicationManager
 		return new VersionFileServerData(minUsageFileServer, highestVersion);
 	}
 
-	public List<FileServerData> getNServers(int number)
+	public synchronized List<FileServerData> getNServers(int number)
 	{
 		List<FileServerData> allFileServers = new ArrayList<FileServerData>(ProxyInfo.getInstance().getFileServerData().values());
 
@@ -130,7 +122,12 @@ public class ReplicationManager
 		return allFileServers.subList(0, number);
 	}
 
-	public List<FileServerData> getReadQuorumServers()
+	public synchronized int getReadQuorum()
+	{
+		return numberReadQuorum;
+	}
+
+	public synchronized List<FileServerData> getReadQuorumServers()
 	{
 		List<FileServerData> readQuorumServersBefore = readQuorumServers;
 		readQuorumServers = getNServers(numberReadQuorum);
@@ -158,12 +155,17 @@ public class ReplicationManager
 		return readQuorumServers;
 	}
 
-	public List<FileServerData> getWriteQuorumServers()
+	public synchronized int getWriteQuorum()
+	{
+		return numberWriteQuorum;
+	}
+
+	public synchronized List<FileServerData> getWriteQuorumServers()
 	{
 		return getNServers(numberWriteQuorum);
 	}
 
-	public void initializeNumbers()
+	public synchronized void initializeNumbers()
 	{
 		numberFileServers = proxyInfo.getFileServerData().size();
 		numberWriteQuorum = numberFileServers / 2 + 1;
@@ -171,7 +173,7 @@ public class ReplicationManager
 		// System.out.println(this);
 	}
 
-	public boolean isInReadQuorum(FileServerData data)
+	public synchronized boolean isInReadQuorum(FileServerData data)
 	{
 		return getReadQuorumServers().contains(data);
 	}
@@ -198,7 +200,7 @@ public class ReplicationManager
 	}
 
 	@Override
-	public String toString()
+	public synchronized String toString()
 	{
 		return numberReadQuorum + "+" + numberWriteQuorum + ">" + numberFileServers + "\n" + numberWriteQuorum + ">" + numberFileServers + "/2";
 	}
