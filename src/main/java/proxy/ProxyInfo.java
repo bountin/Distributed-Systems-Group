@@ -499,6 +499,11 @@ public class ProxyInfo
 		this.userKeyHolder = userKeyHolder;
 	}
 
+	public synchronized void setUsers(Map<String, User> users)
+	{
+		this.users = Collections.synchronizedMap(new HashMap<String, User>(users));
+	}
+
 	private synchronized Response synchronizeFilesOnFileServer(FileServerData data)
 	{
 		try

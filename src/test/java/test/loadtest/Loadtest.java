@@ -3,11 +3,9 @@ package test.loadtest;
 import java.io.File;
 import java.io.IOException;
 import java.security.KeyPair;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +13,7 @@ import java.util.Timer;
 
 import model.KeyHolder;
 import model.MapKeyHolder;
+import objects.User;
 
 import org.junit.After;
 import org.junit.Before;
@@ -22,6 +21,7 @@ import org.junit.Test;
 
 import proxy.IProxyCli;
 import proxy.ProxyConfig;
+import proxy.ProxyInfo;
 import server.IFileServerCli;
 import util.ComponentFactory;
 import util.Config;
@@ -39,10 +39,11 @@ public class Loadtest implements Runnable
 	private LoadtestConfig config;
 	private IProxyCli proxy;
 	private IFileServerCli server;
-	private String overWriteUploadFile;
+	private String uploadFileOverwrite = "fs1.txt";
 	private String uploadFile = "fs1.txt";
+	private String downloadFile = "fs1.txt";
 	private List<IClientCli> clients = new ArrayList<IClientCli>();
-	private final String CLIENT = "client";// clientname
+	private final String CLIENT = "alice";// clientname
 	private final String host = "localhost";
 	private final Integer tcpPort = 12290;
 	private final Integer udpPort = 12291;
@@ -52,8 +53,9 @@ public class Loadtest implements Runnable
 	private final File downloadDir = new File(folder, "download");
 	private final String bindingName = "managementservice";
 	private List<Timer> timers = new ArrayList<Timer>();
-	private int uploadNonOverwriteSec;
-	private int uploadOverwriteSec;
+	private Integer uploadNonOverwriteSec;
+	private Integer uploadOverwriteSec;
+	private Integer downloadSec;
 	private final String HMAC_KEY_PATH = "keys/hmac.key";
 
 	static ComponentFactory componentFactory = new ComponentFactory();
@@ -137,27 +139,31 @@ public class Loadtest implements Runnable
 	public void before() throws Exception
 	{
 		System.out.println(downloadDir.mkdir());
-		KeyPair proxyKeyPair = EncryptionUtil.generateRSAKeyPair();
 
-		System.out.println("privateProxyString " + Arrays.toString(proxyKeyPair.getPrivate().getEncoded()));
-		System.out.println("publicProxyString " + Arrays.toString(proxyKeyPair.getPublic().getEncoded()));
+		// KeyPair proxyKeyPair = EncryptionUtil.generateRSAKeyPair();
+		// System.out.println(proxyKeyPair.getPrivate().getEncoded().length + " privateProxyString " + Arrays.toString(proxyKeyPair.getPrivate().getEncoded()));
+		// System.out.println(proxyKeyPair.getPublic().getEncoded().length + " publicProxyString " + Arrays.toString(proxyKeyPair.getPublic().getEncoded()));
+		PublicKey publicProxyKey = EncryptionUtil.getPublicKeyFromFile(new File("keys/proxy.pub.pem"));
+		PrivateKey privateProxyKey = EncryptionUtil.getPrivateKeyFromFile(new File("keys/proxy.pem"), "12345");
 
 		// same keyPair for all clients
 		KeyHolder userKeyHolder = generateKeys(config.getNumberClients());
-		uploadNonOverwriteSec = 30;// 60 / config.getUploadsPerMin() / (1.0 - config.getOverwriteRatio());
-		System.out.println(uploadOverwriteSec);
+		initPeriods(config);
 
-		proxy = componentFactory.startProxy(createProxyConfig(userKeyHolder, proxyKeyPair.getPublic(), proxyKeyPair.getPrivate()), createManagementConfig(userKeyHolder), new Shell("proxy", new TestOutputStream(System.out), new TestInputStream()));
+		proxy = componentFactory.startProxy(createProxyConfig(userKeyHolder, publicProxyKey, privateProxyKey), createManagementConfig(userKeyHolder), new Shell("proxy", new TestOutputStream(System.out), new TestInputStream()));
 
 		server = componentFactory.startFileServer(new Config("fs1"), new Shell("fs1", new TestOutputStream(System.out), new TestInputStream()));
+
+		Thread.sleep(1000);
+		ProxyInfo.getInstance().setUsers(createUsers(config.getNumberClients()));
 
 		synchronized(clients)
 		{
 			for(int i = 1; i <= config.getNumberClients(); i++)
 			{
-				ClientConfig clientConfig = createClientConfig(i, userKeyHolder, proxyKeyPair.getPublic());
+				ClientConfig clientConfig = createClientConfig(i, userKeyHolder, publicProxyKey);
 				ManagementConfig managementConfig = createManagementConfig(userKeyHolder);
-				IClientCli client = componentFactory.startClient(clientConfig, managementConfig, new Shell(CLIENT + i, new TestOutputStream(System.out), new TestInputStream()));
+				IClientCli client = componentFactory.startClient(clientConfig, managementConfig, new Shell(CLIENT + i, System.out, new TestInputStream()));
 				clients.add(client);
 			}
 		}
@@ -167,6 +173,7 @@ public class Loadtest implements Runnable
 	{
 		File clientDirectory = new File(downloadDir, "client" + i);
 		System.out.println(clientDirectory.mkdir());
+		
 		String proxyHost = host;
 		return new ClientConfig(clientDirectory, proxyHost, tcpPort, userKeyHolder, publicProxyKey);
 	}
@@ -183,14 +190,48 @@ public class Loadtest implements Runnable
 		return proxyConfig;
 	}
 
-	private KeyHolder generateKeys(int numberClients) throws NoSuchAlgorithmException
+	private Map<String, User> createUsers(int numberClients)
+	{
+		Map<String, User> users = new HashMap<String, User>();
+		for(int i = 1; i <= numberClients; i++)
+		{
+			users.put(CLIENT + i, new User(CLIENT + i, CLIENT + i, false, i * 1000));
+		}
+		return users;
+	}
+
+	private KeyHolder generateKeys(int numberClients) throws Exception
 	{
 		Map<String, KeyPair> keys = new HashMap<String, KeyPair>();
 		for(int i = 1; i <= numberClients; i++)
 		{
-			keys.put(CLIENT + i, EncryptionUtil.generateRSAKeyPair());
+			PublicKey publicKey = EncryptionUtil.getPublicKeyFromFile(new File("keys/alice.pub.pem"));
+			PrivateKey privateKey = EncryptionUtil.getPrivateKeyFromFile(new File("keys/alice.pem"), "12345");
+
+			KeyPair keyPair = new KeyPair(publicKey, privateKey);
+			keys.put(CLIENT + i, keyPair);
+			// System.out.println(keyPair.getPublic().getEncoded().length + " client" + i + " key: " + Arrays.toString(keyPair.getPublic().getEncoded()));
 		}
 		return new MapKeyHolder(keys);
+	}
+
+	private void initPeriods(LoadtestConfig config2)
+	{
+		if((1 - config.getOverwriteRatio()) > 0)
+		{
+			uploadNonOverwriteSec = (int)Math.ceil((60.0 / config.getUploadsPerMin()) / (1.0 - config.getOverwriteRatio()));
+		}
+		if(config.getOverwriteRatio() > 0)
+		{
+			uploadOverwriteSec = (int)Math.ceil((60.0 / config.getUploadsPerMin()) / config.getOverwriteRatio());
+		}
+		if(config.getDownloadsPerMin() > 0)
+		{
+			downloadSec = (int)Math.ceil(60.0 / config.getDownloadsPerMin());
+		}
+		System.out.println("uploadnono " + uploadNonOverwriteSec);
+		System.out.println("uploadover " + uploadOverwriteSec);
+		System.out.println("download " + downloadSec);
 	}
 
 	@Override
@@ -221,9 +262,21 @@ public class Loadtest implements Runnable
 			{
 				clients.get(i).login(CLIENT + (i + 1), "");
 
-				// Timer timer = new Timer();
-				// timer.schedule(new DownloadSender(clients.get(i), uploadFile, System.out), 0, uploadNonOverwriteSec);
-				// timers.add(timer);
+				Timer timer = new Timer();
+				if(uploadNonOverwriteSec != null)
+				{
+					timer.schedule(new UploadSender(clients.get(i), uploadFile, System.out), 0, uploadNonOverwriteSec);
+				}
+				if(uploadOverwriteSec != null)
+				{
+					timer.schedule(new UploadSender(clients.get(i), uploadFileOverwrite, System.out), 0, uploadOverwriteSec);
+				}
+				if(downloadSec != null)
+				{
+					timer.schedule(new DownloadSender(clients.get(i), downloadFile, System.out), 0, downloadSec);
+				}
+
+				timers.add(timer);
 			}
 		}
 

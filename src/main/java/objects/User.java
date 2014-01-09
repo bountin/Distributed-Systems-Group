@@ -7,6 +7,20 @@ public class User
 	private boolean online;
 	private long credits;
 
+	public User()
+	{
+
+	}
+
+	public User(String username, String password, boolean online, long credits)
+	{
+		super();
+		this.username = username;
+		this.password = password;
+		this.online = online;
+		this.credits = credits;
+	}
+
 	public long getCredits()
 	{
 		return credits;
@@ -26,6 +40,7 @@ public class User
 	{
 		return online;
 	}
+
 	public void setCredits(long credits)
 	{
 		this.credits = credits;
@@ -45,6 +60,5 @@ public class User
 	{
 		this.username = username;
 	}
-
 
 }
