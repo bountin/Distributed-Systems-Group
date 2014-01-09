@@ -81,7 +81,9 @@ public class ProxyInfo
 
 		for (IRmiClientData subscription: toRemove) {
 			downloadSubscriptions.remove(subscription);
-			subscription.unregister();
+			try {
+				subscription.unregister();
+			} catch (RemoteException ignored) {}
 		}
 	}
 
@@ -104,7 +106,9 @@ public class ProxyInfo
 
 		for (IRmiClientData subscription: toRemove) {
 			downloadSubscriptions.remove(subscription);
-			subscription.unregister();
+			try {
+				subscription.unregister();
+			} catch (RemoteException ignored) {}
 		}
 	}
 
