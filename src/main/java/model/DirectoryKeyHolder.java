@@ -7,6 +7,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 
 import org.bouncycastle.openssl.PEMWriter;
+
 import util.EncryptionUtil;
 
 public class DirectoryKeyHolder implements KeyHolder
@@ -32,7 +33,8 @@ public class DirectoryKeyHolder implements KeyHolder
 	@Override
 	public PublicKey getPublicKey(String username) throws Exception
 	{
-		synchronized (this) {
+		synchronized(this)
+		{
 			File publicKeyFile = new File(directory, username + ".pub.pem");
 			if(!publicKeyFile.exists())
 			{
@@ -43,8 +45,10 @@ public class DirectoryKeyHolder implements KeyHolder
 	}
 
 	@Override
-	public void setPublicKey(String username, PublicKey key) throws IOException {
-		synchronized (this) {
+	public void setPublicKey(String username, PublicKey key) throws IOException
+	{
+		synchronized(this)
+		{
 			File f = new File(directory, username + ".pub.pem");
 			FileWriter fw = new FileWriter(f);
 
