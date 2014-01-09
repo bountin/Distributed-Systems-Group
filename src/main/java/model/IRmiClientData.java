@@ -9,4 +9,5 @@ public interface IRmiClientData extends Remote {
 	String getUser() throws RemoteException;
 	String getFilename() throws RemoteException;
 	int getCount() throws RemoteException;
+	void unregister() throws RemoteException;
 }
