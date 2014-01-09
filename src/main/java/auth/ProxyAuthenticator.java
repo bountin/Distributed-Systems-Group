@@ -20,6 +20,7 @@ import channel.TCPChannel;
 
 public class ProxyAuthenticator
 {
+	private final static String B64 = "a-zA-Z0-9/+";
 
 	public static ObjectChannel authenticate(Socket socket, ProxyManager proxyManager, ProxyConfig proxyConfig) throws Exception
 	{
@@ -30,10 +31,12 @@ public class ProxyAuthenticator
 
 		// !login <username> <client-challenge>
 		AuthClientChallenge loginRequest = (AuthClientChallenge)objectRSAChannel.receiveObject();
+		assert loginRequest.toString().matches("!login \\w+ [" + B64 + "]{43}=") : "1st message";
 		rsaChannel.setPublicKey(proxyConfig.getUserPublicKeys().getPublicKey(loginRequest.getUsername()));
 
 		// !ok <client-challenge> <proxy-challenge> <secret-key> <iv-parameter>
 		AuthProxyChallenge loginAuthResponse = initializeLoginResponse(loginRequest);
+		assert loginAuthResponse.toString().matches("!ok [" + B64 + "]{43}= [" + B64 + "]{43}= [" + B64 + "]{43}= [" + B64 + "]{22}==") : "2nd message";
 		objectRSAChannel.sendObject(loginAuthResponse);
 
 		// <proxy-challenge>
@@ -41,6 +44,7 @@ public class ProxyAuthenticator
 		ObjectChannel objectAESChannel = new ObjectByteArrayConverterChannel(aesChannel);
 
 		AuthSuccess loginDone = (AuthSuccess)objectAESChannel.receiveObject();
+		assert loginDone.toString().matches("[" + B64 + "]{43}=") : "3rd message";
 		if(!Arrays.equals(loginAuthResponse.getProxyChallenge(), (loginDone.getProxyChallenge())))
 		{
 			throw new AuthenticationException("client could not prove it's identity");
