@@ -20,7 +20,10 @@ import message.response.DownloadFileResponse;
 import message.response.DownloadTicketResponse;
 import message.response.LoginResponse;
 import message.response.MessageResponse;
-import model.*;
+import model.DownloadTicket;
+import model.IRmiServerData;
+import model.RmiClientData;
+import model.TopDownloads;
 import util.MyUtil;
 import auth.ClientAuthenticator;
 import cli.Command;
@@ -67,6 +70,10 @@ public abstract class ClientCommands extends ResponseUtil implements IClientCli,
 		try
 		{
 			response = MyUtil.sendRequest(new DownloadFileRequest(ticket), ticket.getAddress(), ticket.getPort());
+			if(response.getClass().equals(MessageResponse.class))
+			{
+				return (MessageResponse)response;
+			}
 		}
 		catch(Exception e)
 		{
@@ -115,6 +122,23 @@ public abstract class ClientCommands extends ResponseUtil implements IClientCli,
 
 	@Override
 	@Command
+	public MessageResponse getProxyPublicKey()
+	{
+		try
+		{
+			PublicKey key = rmiData.getProxyPublicKey();
+			clientConfig.setPublicProxyKey(key);
+			return new MessageResponse("Successfully received public key of Proxy.");
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			return new MessageResponse("An error occurred: " + e.getMessage());
+		}
+	}
+
+	@Override
+	@Command
 	public Response list()
 	{
 		return send(new ListRequest());
@@ -157,7 +181,92 @@ public abstract class ClientCommands extends ResponseUtil implements IClientCli,
 		}
 	}
 
+	@Override
+	@Command
+	public MessageResponse readQuorum()
+	{
+		try
+		{
+			return new MessageResponse("Read-Quorum is set to " + rmiData.readQuorum() + ".");
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			return new MessageResponse("An error occurred: " + e.getMessage());
+		}
+	}
+
+	@Override
+	@Command
+	public MessageResponse setUserPublicKey(String username)
+	{
+		try
+		{
+			PublicKey key = clientConfig.getPrivateKeyDir().getPublicKey(username);
+			String message = rmiData.setUserKey(username, key);
+			if(message != null)
+			{
+				throw new Exception(message);
+			}
+
+			return new MessageResponse("Successfully transmitted public key of user " + username);
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			return new MessageResponse("An error occurred: " + e.getMessage());
+		}
+	}
+
 	public abstract void shutdown();
+
+	@Override
+	@Command
+	public MessageResponse subscribe(String filename, int count)
+	{
+		if(user == null)
+		{
+			return new MessageResponse("Please log in to subscribe");
+		}
+		try
+		{
+			String result = rmiData.subscribe(new RmiClientData(user, filename, count));
+			if(result == null)
+			{
+				return new MessageResponse("Successfully subscribed for file " + filename);
+			}
+			else
+			{
+				return new MessageResponse(result);
+			}
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			return new MessageResponse("An error occurred: " + e.getMessage());
+		}
+	}
+
+	@Override
+	@Command
+	public MessageResponse topThreeDownloads()
+	{
+		try
+		{
+			TopDownloads downloads = rmiData.topDownloads(3);
+			StringBuilder sb = new StringBuilder();
+			sb.append("Top Three Downloads:\n");
+
+			sb.append((downloads.size() > 0 ? downloads.toString() : "No downloads at all."));
+
+			return new MessageResponse(sb.toString());
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			return new MessageResponse("An error occurred: " + e.getMessage());
+		}
+	}
 
 	/* !upload <filename> */
 	@Override
@@ -167,7 +276,7 @@ public abstract class ClientCommands extends ResponseUtil implements IClientCli,
 		File file = new File(clientConfig.getDownloadDir(), filename);
 		if(!file.exists())
 		{
-			return new MessageResponse("file not in downloadDir " + clientConfig.getDownloadDir());
+			return new MessageResponse("file " + filename + " not in downloadDir " + clientConfig.getDownloadDir());
 		}
 		byte[] content = new byte[new Long(file.length()).intValue()];
 		try
@@ -185,90 +294,16 @@ public abstract class ClientCommands extends ResponseUtil implements IClientCli,
 
 	@Override
 	@Command
-	public MessageResponse readQuorum()
-	{
-		try {
-			return new MessageResponse("Read-Quorum is set to "+rmiData.readQuorum()+".");
-		} catch (Exception e) {
-			e.printStackTrace();
-			return new MessageResponse("An error occurred: " +e.getMessage());
-		}
-	}
-
-	@Override
-	@Command
 	public MessageResponse writeQuorum()
 	{
-		try {
-			return new MessageResponse("Write-Quorum is set to "+rmiData.writeQuorum()+".");
-		} catch (Exception e) {
-			e.printStackTrace();
-			return new MessageResponse("An error occurred: " +e.getMessage());
+		try
+		{
+			return new MessageResponse("Write-Quorum is set to " + rmiData.writeQuorum() + ".");
 		}
-	}
-
-	@Override
-	@Command
-	public MessageResponse topThreeDownloads() {
-		try {
-			TopDownloads downloads = rmiData.topDownloads(3);
-			StringBuilder sb = new StringBuilder();
-			sb.append("Top Three Downloads:\n");
-
-			sb.append((downloads.size() > 0 ? downloads.toString() : "No downloads at all."));
-
-			return new MessageResponse(sb.toString());
-		} catch (Exception e) {
+		catch(Exception e)
+		{
 			e.printStackTrace();
-			return new MessageResponse("An error occurred: " +e.getMessage());
-		}
-	}
-
-	@Override
-	@Command
-	public MessageResponse getProxyPublicKey() {
-		try {
-			PublicKey key = rmiData.getProxyPublicKey();
-			clientConfig.setPublicProxyKey(key);
-			return new MessageResponse("Successfully received public key of Proxy.");
-		} catch (Exception e) {
-			e.printStackTrace();
-			return new MessageResponse("An error occurred: " +e.getMessage());
-		}
-	}
-
-	@Override
-	@Command
-	public MessageResponse setUserPublicKey(String username) {
-		try {
-			PublicKey key = clientConfig.getPrivateKeyDir().getPublicKey(username);
-			String message = rmiData.setUserKey(username,key);
-			if (message != null) {
-				throw new Exception(message);
-			}
-
-			return new MessageResponse("Successfully transmitted public key of user "+username);
-		} catch (Exception e) {
-			e.printStackTrace();
-			return new MessageResponse("An error occurred: " +e.getMessage());
-		}	}
-
-	@Override
-	@Command
-	public MessageResponse subscribe(String filename, int count) {
-		if (user == null) {
-			return new MessageResponse("Please log in to subscribe");
-		}
-		try {
-			String result = rmiData.subscribe(new RmiClientData(user, filename, count));
-			if (result == null) {
-				return new MessageResponse("Successfully subscribed for file " + filename);
-			} else {
-				return new MessageResponse(result);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			return new MessageResponse("An error occurred: " +e.getMessage());
+			return new MessageResponse("An error occurred: " + e.getMessage());
 		}
 	}
 }
