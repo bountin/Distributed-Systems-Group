@@ -40,21 +40,23 @@ public class Loadtest implements Runnable
 	private LoadtestConfig config;
 	private IProxyCli proxy;
 	private IFileServerCli server;
-	private String uploadOverwriteFilename = "fs1.txt";
-	private String uploadFilename = "fs1.txt";
-	private String downloadFilename = "fssdf1.txt";
+	private final String folder = System.getProperty("user.dir");
+	// private final File downloadDir = new File(System.getProperty("java.io.tmpdir"), "download");
+	private final File uploadDownloadDir = new File(folder, "download");
+	private String uploadOverwriteFilename = "update.txt";
+	private String uploadFilename = "update.txt";
+	private String downloadFilename = "fsxf1.txt";
+	private File uploadFile = new File(uploadDownloadDir, uploadFilename);
 	private List<IClientCli> clients = new ArrayList<IClientCli>();
 	private final String CLIENT = "alice";// clientname
 	private final String host = "localhost";
 	private final Integer tcpPort = 12290;
 	private final Integer udpPort = 12291;
 	private final int rmiPort = 12299;
-	private final String folder = System.getProperty("user.dir");
-	// private final File downloadDir = new File(System.getProperty("java.io.tmpdir"), "download");
-	private final File downloadDir = new File(folder, "download");
-	private final File uploadDir = new File(folder, "upload");
 	private final String bindingName = "managementservice";
 	private List<Timer> timers = new ArrayList<Timer>();
+
+	// periods
 	private Integer uploadNonOverwriteSec;
 	private Integer uploadOverwriteSec;
 	private Integer downloadSec;
@@ -175,15 +177,14 @@ public class Loadtest implements Runnable
 	private ClientConfig createClientConfig(int i, KeyHolder userKeyHolder, PublicKey publicProxyKey) throws IOException
 	{
 		String proxyHost = host;
-		return new ClientConfig(downloadDir, proxyHost, tcpPort, userKeyHolder, publicProxyKey);
+		return new ClientConfig(uploadDownloadDir, proxyHost, tcpPort, userKeyHolder, publicProxyKey);
 	}
 
 	private void createFiles() throws IOException
 	{
-		System.out.println(downloadDir.mkdir());
-		System.out.println(uploadDir.mkdir());
+		System.out.println(uploadDownloadDir.mkdir());
 
-		generateFile(downloadFilename, config.getFileSizeKB());
+		generateFile(uploadFile, config.getFileSizeKB());
 	}
 
 	private ManagementConfig createManagementConfig(KeyHolder userKeyHolder)
@@ -223,14 +224,13 @@ public class Loadtest implements Runnable
 
 	private void deleteFiles()
 	{
-		deleteDir(downloadDir);
-		deleteDir(uploadDir);
+		deleteDir(uploadDownloadDir);
 	}
 
-	public void generateFile(String name, long fileSizeKB) throws IOException
+	public void generateFile(File file, long fileSizeKB) throws IOException
 	{
-		RandomAccessFile file = new RandomAccessFile(name, "rw");
-		file.setLength(fileSizeKB * 1024);
+		RandomAccessFile f = new RandomAccessFile(file, "rw");
+		f.setLength(fileSizeKB * 1024);
 	}
 
 	private KeyHolder generateKeys(int numberClients) throws Exception
@@ -276,12 +276,24 @@ public class Loadtest implements Runnable
 			before();
 			System.err.println("test");
 			test();
-			System.err.println("after");
-			after();
+
 		}
 		catch(Exception e)
 		{
 			e.printStackTrace();
+		}
+		finally
+		{
+			System.err.println("after");
+			try
+			{
+				after();
+			}
+			catch(Exception e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 
