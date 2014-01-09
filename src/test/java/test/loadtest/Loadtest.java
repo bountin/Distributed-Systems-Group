@@ -2,6 +2,7 @@ package test.loadtest;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -39,9 +40,9 @@ public class Loadtest implements Runnable
 	private LoadtestConfig config;
 	private IProxyCli proxy;
 	private IFileServerCli server;
-	private String uploadFileOverwrite = "fs1.txt";
-	private String uploadFile = "fs1.txt";
-	private String downloadFile = "fs1.txt";
+	private String uploadOverwriteFilename = "fs1.txt";
+	private String uploadFilename = "fs1.txt";
+	private String downloadFilename = "fssdf1.txt";
 	private List<IClientCli> clients = new ArrayList<IClientCli>();
 	private final String CLIENT = "alice";// clientname
 	private final String host = "localhost";
@@ -51,6 +52,7 @@ public class Loadtest implements Runnable
 	private final String folder = System.getProperty("user.dir");
 	// private final File downloadDir = new File(System.getProperty("java.io.tmpdir"), "download");
 	private final File downloadDir = new File(folder, "download");
+	private final File uploadDir = new File(folder, "upload");
 	private final String bindingName = "managementservice";
 	private List<Timer> timers = new ArrayList<Timer>();
 	private Integer uploadNonOverwriteSec;
@@ -132,13 +134,14 @@ public class Loadtest implements Runnable
 				e.printStackTrace();
 			}
 		}
+		deleteFiles();
 		System.err.println("Loadtest END");
 	}
 
 	@Before
 	public void before() throws Exception
 	{
-		System.out.println(downloadDir.mkdir());
+		createFiles();
 
 		// KeyPair proxyKeyPair = EncryptionUtil.generateRSAKeyPair();
 		// System.out.println(proxyKeyPair.getPrivate().getEncoded().length + " privateProxyString " + Arrays.toString(proxyKeyPair.getPrivate().getEncoded()));
@@ -171,11 +174,16 @@ public class Loadtest implements Runnable
 
 	private ClientConfig createClientConfig(int i, KeyHolder userKeyHolder, PublicKey publicProxyKey) throws IOException
 	{
-		File clientDirectory = new File(downloadDir, "client" + i);
-		System.out.println(clientDirectory.mkdir());
-		
 		String proxyHost = host;
-		return new ClientConfig(clientDirectory, proxyHost, tcpPort, userKeyHolder, publicProxyKey);
+		return new ClientConfig(downloadDir, proxyHost, tcpPort, userKeyHolder, publicProxyKey);
+	}
+
+	private void createFiles() throws IOException
+	{
+		System.out.println(downloadDir.mkdir());
+		System.out.println(uploadDir.mkdir());
+
+		generateFile(downloadFilename, config.getFileSizeKB());
 	}
 
 	private ManagementConfig createManagementConfig(KeyHolder userKeyHolder)
@@ -198,6 +206,31 @@ public class Loadtest implements Runnable
 			users.put(CLIENT + i, new User(CLIENT + i, CLIENT + i, false, i * 1000));
 		}
 		return users;
+	}
+
+	private void deleteDir(File dir)
+	{
+		if(dir.isDirectory() && dir.list().length > 0)
+		{
+			for(File f : dir.listFiles())
+			{
+				f.delete();
+			}
+		}
+		dir.delete();
+
+	}
+
+	private void deleteFiles()
+	{
+		deleteDir(downloadDir);
+		deleteDir(uploadDir);
+	}
+
+	public void generateFile(String name, long fileSizeKB) throws IOException
+	{
+		RandomAccessFile file = new RandomAccessFile(name, "rw");
+		file.setLength(fileSizeKB * 1024);
 	}
 
 	private KeyHolder generateKeys(int numberClients) throws Exception
@@ -265,15 +298,15 @@ public class Loadtest implements Runnable
 				Timer timer = new Timer();
 				if(uploadNonOverwriteSec != null)
 				{
-					timer.schedule(new UploadSender(clients.get(i), uploadFile, System.out), 0, uploadNonOverwriteSec);
+					timer.schedule(new UploadSender(clients.get(i), uploadFilename, System.out), 0, uploadNonOverwriteSec);
 				}
 				if(uploadOverwriteSec != null)
 				{
-					timer.schedule(new UploadSender(clients.get(i), uploadFileOverwrite, System.out), 0, uploadOverwriteSec);
+					timer.schedule(new UploadSender(clients.get(i), uploadOverwriteFilename, System.out), 0, uploadOverwriteSec);
 				}
 				if(downloadSec != null)
 				{
-					timer.schedule(new DownloadSender(clients.get(i), downloadFile, System.out), 0, downloadSec);
+					timer.schedule(new DownloadSender(clients.get(i), downloadFilename, System.out), 0, downloadSec);
 				}
 
 				timers.add(timer);
